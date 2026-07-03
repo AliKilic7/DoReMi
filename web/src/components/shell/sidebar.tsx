@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import type { ComponentType, SVGProps } from "react";
-import { CloseIcon, HomeIcon, LibraryIcon, LogoIcon, SearchIcon } from "@/components/icons";
+import { CloseIcon, HeartIcon, HomeIcon, LibraryIcon, LogoIcon, SearchIcon } from "@/components/icons";
 import { cn } from "@/lib/utils";
 
 interface NavItem {
@@ -17,6 +17,7 @@ const NAV_ITEMS: NavItem[] = [
   { href: "/home", label: "Home", icon: HomeIcon },
   { href: "/search", label: "Search", icon: SearchIcon },
   { href: "/library", label: "Library", icon: LibraryIcon },
+  { href: "/liked", label: "Liked Songs", icon: HeartIcon },
 ];
 
 function NavLinks({ onNavigate }: { onNavigate?: () => void }) {

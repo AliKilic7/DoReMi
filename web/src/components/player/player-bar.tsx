@@ -6,12 +6,14 @@ import { useState } from "react";
 import {
   PauseIcon,
   PlayIcon,
+  QueueIcon,
   RepeatIcon,
   ShuffleIcon,
   SkipNextIcon,
   SkipPrevIcon,
   VolumeIcon,
 } from "@/components/icons";
+import { LikeButton } from "@/components/catalog/like-button";
 import { Slider } from "@/components/ui/slider";
 import { Visualizer } from "@/components/player/visualizer";
 import { cn, formatDuration } from "@/lib/utils";
@@ -64,6 +66,7 @@ export function PlayerBar() {
   const muted = usePlayerStore((s) => s.muted);
   const currentTime = usePlayerStore((s) => s.currentTime);
   const duration = usePlayerStore((s) => s.duration);
+  const queueOpen = usePlayerStore((s) => s.queueOpen);
   const store = usePlayerStore;
 
   // While dragging we show the drag position, not the playhead.
@@ -108,6 +111,7 @@ export function PlayerBar() {
                 {song.artist.name}
               </Link>
             </div>
+            <LikeButton songId={song.id} songTitle={song.title} alwaysVisible className="shrink-0" />
           </div>
 
           {/* transport + seek */}
@@ -169,9 +173,16 @@ export function PlayerBar() {
             </div>
           </div>
 
-          {/* right cluster: visualizer + volume */}
+          {/* right cluster: visualizer + queue + volume */}
           <div className="hidden w-56 shrink-0 items-center justify-end gap-3 md:flex">
             <Visualizer />
+            <ControlButton
+              label={queueOpen ? "Close queue" : "Open queue"}
+              active={queueOpen}
+              onClick={() => store.getState().toggleQueue()}
+            >
+              <QueueIcon />
+            </ControlButton>
             <button
               onClick={() => store.getState().toggleMute()}
               aria-label={muted ? "Unmute" : "Mute"}

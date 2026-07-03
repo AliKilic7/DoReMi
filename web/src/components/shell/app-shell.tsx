@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
 import { AudioEngine } from "@/components/player/audio-engine";
 import { PlayerBar } from "@/components/player/player-bar";
+import { QueuePanel } from "@/components/player/queue-panel";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuthStore } from "@/stores/auth-store";
 import { MobileSidebar, Sidebar } from "./sidebar";
@@ -65,6 +66,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
       <AudioEngine />
       <PlayerBar />
+      <QueuePanel />
     </div>
   );
 }

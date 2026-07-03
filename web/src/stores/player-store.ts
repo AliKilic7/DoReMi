@@ -20,6 +20,8 @@ interface PlayerState {
   duration: number;
   /** One-shot seek request consumed by the audio engine. */
   pendingSeek: number | null;
+  /** Whether the queue side panel is open. */
+  queueOpen: boolean;
 
   playSong: (song: SongSummary, context?: SongSummary[]) => void;
   playAt: (index: number) => void;
@@ -35,8 +37,12 @@ interface PlayerState {
   toggleShuffle: () => void;
   cycleRepeat: () => void;
   removeFromQueue: (index: number) => void;
-  addToQueue: (song: SongSummary) => void;
+  /** Appends a song; returns false if it's already queued. */
+  addToQueue: (song: SongSummary) => boolean;
+  /** Replaces everything after the current track (drag & drop reorder). */
+  setUpcoming: (songs: SongSummary[]) => void;
   clearUpcoming: () => void;
+  toggleQueue: () => void;
 }
 
 function shuffled<T>(items: T[]): T[] {
@@ -62,6 +68,7 @@ export const usePlayerStore = create<PlayerState>()(
       currentTime: 0,
       duration: 0,
       pendingSeek: null,
+      queueOpen: false,
 
       playSong: (song, context) => {
         const base = context && context.length > 0 ? context : [song];
@@ -174,16 +181,30 @@ export const usePlayerStore = create<PlayerState>()(
         });
       },
 
-      addToQueue: (song) =>
+      addToQueue: (song) => {
+        const { queue } = get();
+        if (queue.some((s) => s.id === song.id)) return false;
         set((state) => ({
           queue: [...state.queue, song],
           baseQueue: [...state.baseQueue, song],
-        })),
+        }));
+        // starting a queue from scratch loads (but doesn't autoplay) the song
+        if (get().currentIndex < 0) set({ currentIndex: 0 });
+        return true;
+      },
+
+      setUpcoming: (songs) => {
+        const { queue, currentIndex } = get();
+        const played = queue.slice(0, currentIndex + 1);
+        set({ queue: [...played, ...songs], baseQueue: [...played, ...songs] });
+      },
 
       clearUpcoming: () => {
         const { queue, currentIndex } = get();
         set({ queue: queue.slice(0, currentIndex + 1), baseQueue: queue.slice(0, currentIndex + 1) });
       },
+
+      toggleQueue: () => set((state) => ({ queueOpen: !state.queueOpen })),
     }),
     {
       name: "doremi-player",
