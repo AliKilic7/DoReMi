@@ -1,5 +1,7 @@
 # DoReMi 🎵
 
+[![CI](https://github.com/AliKilic7/DoReMi/actions/workflows/ci.yml/badge.svg)](https://github.com/AliKilic7/DoReMi/actions/workflows/ci.yml)
+
 A premium, Spotify-inspired music streaming web application with an original design language —
 dark glassmorphism, gradient artwork, smooth micro-animations.
 
@@ -37,6 +39,10 @@ and filters, search + history, likes, playlist lifecycle + ownership enforcement
 upload signature rejection, player store logic (shuffle/repeat/queue editing), the
 API client's refresh-and-retry behavior, plus full browser flows for every page and
 player mode — including real audio playback and drag & drop.
+
+**CI**: every push runs lint → typecheck → tests → builds against a Postgres 16
+service container, then a second job builds for production, boots both servers and
+runs the full Playwright E2E suite ([.github/workflows/ci.yml](.github/workflows/ci.yml)).
 
 ## Tech stack
 
