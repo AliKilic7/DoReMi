@@ -19,3 +19,18 @@ if (!parsed.success) {
 
 export const env = parsed.data;
 export const isProd = env.NODE_ENV === "production";
+
+// In production, refuse to boot with placeholder or weak secrets.
+if (isProd) {
+  for (const [name, value] of [
+    ["JWT_ACCESS_SECRET", env.JWT_ACCESS_SECRET],
+    ["JWT_REFRESH_SECRET", env.JWT_REFRESH_SECRET],
+  ] as const) {
+    if (value.includes("change_me") || value.length < 32) {
+      console.error(
+        `❌ ${name} is a placeholder or too short (<32 chars). Generate one with: openssl rand -base64 48`,
+      );
+      process.exit(1);
+    }
+  }
+}

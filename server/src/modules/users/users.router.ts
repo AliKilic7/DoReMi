@@ -5,11 +5,11 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { Router } from "express";
 import type { Request, Response } from "express";
-import multer from "multer";
 import { requireAuth } from "../../middleware/auth.js";
 import { setAuthCookies } from "../../utils/cookies.js";
 import { ApiError } from "../../utils/errors.js";
 import { signAccessToken, signRefreshToken } from "../../utils/jwt.js";
+import { assertImageSignature, IMAGE_EXTENSIONS, imageUpload } from "../../utils/uploads.js";
 import { toPublicUser } from "../auth/auth.service.js";
 import { changePasswordSchema, settingsSchema, updateProfileSchema } from "./users.schemas.js";
 import * as service from "./users.service.js";
@@ -21,18 +21,6 @@ export const AVATARS_DIR = path.join(
   "avatars",
 );
 mkdirSync(AVATARS_DIR, { recursive: true });
-
-const IMAGE_TYPES: Record<string, string> = {
-  "image/jpeg": "jpg",
-  "image/png": "png",
-  "image/webp": "webp",
-};
-
-const upload = multer({
-  storage: multer.memoryStorage(),
-  limits: { fileSize: 2 * 1024 * 1024 },
-  fileFilter: (_req, file, cb) => cb(null, file.mimetype in IMAGE_TYPES),
-});
 
 export const usersRouter = Router();
 
@@ -68,10 +56,11 @@ usersRouter.patch("/me/settings", requireAuth, async (req: Request, res: Respons
 usersRouter.post(
   "/me/avatar",
   requireAuth,
-  upload.single("avatar"),
+  imageUpload.single("avatar"),
   async (req: Request, res: Response) => {
     if (!req.file) throw ApiError.badRequest("Upload a JPEG, PNG or WebP up to 2MB", "invalid_avatar");
-    const ext = IMAGE_TYPES[req.file.mimetype]!;
+    assertImageSignature(req.file.buffer, req.file.mimetype);
+    const ext = IMAGE_EXTENSIONS[req.file.mimetype]!;
     const fileName = `${req.userId}-${randomUUID().slice(0, 8)}.${ext}`;
     await writeFile(path.join(AVATARS_DIR, fileName), req.file.buffer);
     res.json({ user: await service.setAvatar(req.userId!, `/api/avatars/${fileName}`) });

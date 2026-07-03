@@ -144,8 +144,10 @@ export const usePlayerStore = create<PlayerState>()(
       clearPendingSeek: () => set({ pendingSeek: null }),
       setProgress: (currentTime, duration) => set({ currentTime, duration }),
 
-      setVolume: (volume) =>
-        set({ volume: Math.min(1, Math.max(0, volume)), muted: volume === 0 ? true : false }),
+      setVolume: (volume) => {
+        const clamped = Math.min(1, Math.max(0, volume));
+        set({ volume: clamped, muted: clamped === 0 });
+      },
       toggleMute: () => set((state) => ({ muted: !state.muted })),
 
       toggleShuffle: () => {
