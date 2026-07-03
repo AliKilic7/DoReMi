@@ -2,6 +2,8 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
+import { AudioEngine } from "@/components/player/audio-engine";
+import { PlayerBar } from "@/components/player/player-bar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuthStore } from "@/stores/auth-store";
 import { MobileSidebar, Sidebar } from "./sidebar";
@@ -48,16 +50,21 @@ export function AppShell({ children }: { children: ReactNode }) {
   if (status !== "authenticated") return <ShellSkeleton />;
 
   return (
-    <div className="bg-mesh flex h-screen gap-3 p-3">
-      <Sidebar />
-      <MobileSidebar open={menuOpen} onClose={() => setMenuOpen(false)} />
+    <div className="bg-mesh flex h-screen flex-col gap-3 p-3">
+      <div className="flex min-h-0 flex-1 gap-3">
+        <Sidebar />
+        <MobileSidebar open={menuOpen} onClose={() => setMenuOpen(false)} />
 
-      <div className="flex min-w-0 flex-1 flex-col gap-3">
-        <Topbar onMenuClick={() => setMenuOpen(true)} />
-        <main className="glass min-h-0 flex-1 overflow-y-auto rounded-2xl">
-          <div className="mx-auto max-w-7xl px-5 py-6 md:px-8">{children}</div>
-        </main>
+        <div className="flex min-w-0 flex-1 flex-col gap-3">
+          <Topbar onMenuClick={() => setMenuOpen(true)} />
+          <main className="glass min-h-0 flex-1 overflow-y-auto rounded-2xl">
+            <div className="mx-auto max-w-7xl px-5 py-6 md:px-8">{children}</div>
+          </main>
+        </div>
       </div>
+
+      <AudioEngine />
+      <PlayerBar />
     </div>
   );
 }

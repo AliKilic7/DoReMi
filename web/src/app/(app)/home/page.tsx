@@ -58,7 +58,7 @@ export default function HomePage() {
                   title={song.title}
                   subtitle={song.artist.name}
                   gradient={song.gradient}
-                  onPlay={() => play(song)}
+                  onPlay={() => play(song, data.trendingSongs)}
                 />
               ))}
             </Shelf>

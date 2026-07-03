@@ -197,7 +197,7 @@ export default function SearchPage() {
                   <h2 className="font-display mb-3 text-xl font-bold tracking-tight">Songs</h2>
                   <div>
                     {data.songs.slice(0, 4).map((song, i) => (
-                      <SongRow key={song.id} song={song} index={i + 1} onPlay={play} />
+                      <SongRow key={song.id} song={song} index={i + 1} onPlay={(s) => play(s, data.songs)} />
                     ))}
                   </div>
                 </section>

@@ -1,16 +1,18 @@
 "use client";
 
 import { useCallback } from "react";
-import { toast } from "sonner";
+import { ensureAnalyser } from "@/lib/audio";
+import { usePlayerStore } from "@/stores/player-store";
 import type { SongSummary } from "@/types";
 
 /**
- * Central play entry point. The audio engine ships with the player feature —
- * until then every play affordance funnels here so swapping in the real
- * implementation is a one-file change.
+ * Central play entry point. Pass the surrounding list as `context` so the
+ * queue continues naturally (album tracklist, search results, top songs…).
+ * Must be invoked from a user gesture — it also unlocks the Web Audio graph.
  */
 export function usePlay() {
-  return useCallback((song: SongSummary) => {
-    toast(`"${song.title}" — the player arrives with the next update 🎧`);
+  return useCallback((song: SongSummary, context?: SongSummary[]) => {
+    ensureAnalyser();
+    usePlayerStore.getState().playSong(song, context);
   }, []);
 }

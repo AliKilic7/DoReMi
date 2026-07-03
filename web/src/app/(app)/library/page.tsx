@@ -103,7 +103,7 @@ function SongsTab({ genre, songSort }: { genre?: string; songSort: SongSort }) {
     <>
       <div role="list" aria-label="Songs">
         {query.data.map((song, i) => (
-          <SongRow key={song.id} song={song} index={i + 1} onPlay={play} />
+          <SongRow key={song.id} song={song} index={i + 1} onPlay={(s) => play(s, query.data)} />
         ))}
       </div>
       <LoadMore

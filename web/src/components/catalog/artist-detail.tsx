@@ -88,7 +88,7 @@ export function ArtistDetailView({ slug }: { slug: string }) {
       <div className="mt-2 flex items-center gap-4">
         <Button
           size="lg"
-          onClick={() => artist.topSongs[0] && play(artist.topSongs[0])}
+          onClick={() => artist.topSongs[0] && play(artist.topSongs[0], artist.topSongs)}
           aria-label={`Play ${artist.name}`}
         >
           <PlayIcon className="size-5 translate-x-px" />
@@ -101,7 +101,7 @@ export function ArtistDetailView({ slug }: { slug: string }) {
         <h2 className="font-display px-3 text-xl font-bold tracking-tight">Popular</h2>
         <div className="mt-3">
           {visibleSongs.map((song, i) => (
-            <SongRow key={song.id} song={song} index={i + 1} onPlay={play} />
+            <SongRow key={song.id} song={song} index={i + 1} onPlay={(s) => play(s, artist.topSongs)} />
           ))}
         </div>
         {artist.topSongs.length > 5 && (

@@ -91,7 +91,11 @@ export function AlbumDetailView({ slug }: { slug: string }) {
       </header>
 
       <div className="mt-2 flex items-center gap-4">
-        <Button size="lg" onClick={() => album.songs[0] && play(album.songs[0])} aria-label="Play album">
+        <Button
+          size="lg"
+          onClick={() => album.songs[0] && play(album.songs[0], album.songs)}
+          aria-label="Play album"
+        >
           <PlayIcon className="size-5 translate-x-px" />
           Play
         </Button>
@@ -111,7 +115,7 @@ export function AlbumDetailView({ slug }: { slug: string }) {
               key={song.id}
               song={song}
               index={song.trackNumber}
-              onPlay={play}
+              onPlay={(s) => play(s, album.songs)}
               hideAlbum
               hideArt
             />

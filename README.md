@@ -3,7 +3,7 @@
 A premium, Spotify-inspired music streaming web application with an original design language —
 dark glassmorphism, gradient artwork, smooth micro-animations.
 
-> **Status**: Features 1–3 shipped — foundation & auth, seeded music catalog with synthesized audio, and the app shell with home / search / library / album / artist pages.
+> **Status**: Features 1–4 shipped — foundation & auth, seeded music catalog with synthesized audio, app shell with home / search / library / album / artist pages, and the full audio player (queue, shuffle, repeat, seek, volume, keyboard shortcuts, visualizer).
 
 **Demo account**: `demo@doremi.dev` / `demo1234` (after `npm run db:seed`)
 
