@@ -57,6 +57,43 @@ export function DropdownMenuSeparator({
   );
 }
 
+export const DropdownMenuSub = DropdownMenuPrimitive.Sub;
+
+export function DropdownMenuSubTrigger({
+  className,
+  ...props
+}: ComponentProps<typeof DropdownMenuPrimitive.SubTrigger>) {
+  return (
+    <DropdownMenuPrimitive.SubTrigger
+      className={cn(
+        "flex cursor-pointer items-center gap-2.5 rounded-xl px-3 py-2 text-sm text-muted-foreground outline-none select-none",
+        "transition-colors data-highlighted:bg-white/8 data-highlighted:text-foreground data-[state=open]:bg-white/8 data-[state=open]:text-foreground",
+        "[&_svg]:size-4 [&_svg]:shrink-0",
+        className,
+      )}
+      {...props}
+    />
+  );
+}
+
+export function DropdownMenuSubContent({
+  className,
+  ...props
+}: ComponentProps<typeof DropdownMenuPrimitive.SubContent>) {
+  return (
+    <DropdownMenuPrimitive.Portal>
+      <DropdownMenuPrimitive.SubContent
+        sideOffset={6}
+        className={cn(
+          "glass-strong z-50 max-h-72 min-w-48 overflow-y-auto rounded-2xl p-1.5 shadow-2xl",
+          className,
+        )}
+        {...props}
+      />
+    </DropdownMenuPrimitive.Portal>
+  );
+}
+
 export function DropdownMenuLabel({
   className,
   ...props

@@ -6,10 +6,12 @@ import { MediaCard } from "@/components/catalog/media-card";
 import { EmptyState } from "@/components/catalog/empty-state";
 import { SongRow } from "@/components/catalog/song-row";
 import { CardGridSkeleton, SongRowSkeleton } from "@/components/catalog/skeletons";
-import { LibraryIcon, NoteIcon } from "@/components/icons";
+import { LibraryIcon, NoteIcon, PlusIcon } from "@/components/icons";
+import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useGenres, useInfiniteAlbums, useInfiniteArtists, useInfiniteSongs } from "@/hooks/use-catalog";
+import { usePlaylistMutations, usePlaylists } from "@/hooks/use-playlists";
 import { useInView } from "@/hooks/use-in-view";
 import { usePlay } from "@/hooks/use-play";
 import { cn, formatCompactNumber } from "@/lib/utils";
@@ -176,6 +178,48 @@ function ArtistsTab({ artistSort }: { artistSort: ArtistSort }) {
   );
 }
 
+function PlaylistsTab() {
+  const { data: playlists, isPending } = usePlaylists();
+  const { create } = usePlaylistMutations();
+
+  if (isPending) return <CardGridSkeleton count={6} />;
+  if (!playlists?.length)
+    return (
+      <EmptyState
+        icon={<LibraryIcon />}
+        title="No playlists yet"
+        description="Create your first playlist and start collecting songs you love."
+        action={
+          <Button size="sm" onClick={() => create.mutate({})} disabled={create.isPending}>
+            <PlusIcon className="size-4" /> New playlist
+          </Button>
+        }
+      />
+    );
+
+  return (
+    <div className="grid grid-cols-2 gap-1 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+      {playlists.map((playlist) => (
+        <MediaCard
+          key={playlist.id}
+          href={`/playlist/${playlist.id}`}
+          title={`${playlist.pinned ? "📌 " : ""}${playlist.name}`}
+          subtitle={`${playlist.songCount} songs${playlist.favorite ? " · ♥" : ""}`}
+          gradient={playlist.coverUrl ? `url(${playlist.coverUrl}) center/cover` : playlist.gradient}
+        />
+      ))}
+      <button
+        onClick={() => create.mutate({})}
+        disabled={create.isPending}
+        className="focus-ring group m-3 flex aspect-square flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-border-strong text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground"
+      >
+        <PlusIcon className="size-7 transition-transform group-hover:scale-110" />
+        <span className="text-sm font-medium">New playlist</span>
+      </button>
+    </div>
+  );
+}
+
 function LibraryContent() {
   const { params, setParam } = useLibraryParams();
   const tab = params.get("tab") ?? "songs";
@@ -198,6 +242,7 @@ function LibraryContent() {
             <TabsTrigger value="songs">Songs</TabsTrigger>
             <TabsTrigger value="albums">Albums</TabsTrigger>
             <TabsTrigger value="artists">Artists</TabsTrigger>
+            <TabsTrigger value="playlists">Playlists</TabsTrigger>
           </TabsList>
 
           {tab === "songs" && (
@@ -236,7 +281,7 @@ function LibraryContent() {
         </div>
 
         {/* Genre filter applies to songs & albums */}
-        {tab !== "artists" && genres.data && (
+        {tab !== "artists" && tab !== "playlists" && genres.data && (
           <div className="mt-4 flex flex-wrap gap-1.5" role="group" aria-label="Filter by genre">
             <button
               onClick={() => setParam("genre", undefined)}
@@ -276,6 +321,9 @@ function LibraryContent() {
         </TabsContent>
         <TabsContent value="artists">
           <ArtistsTab artistSort={artistSort} />
+        </TabsContent>
+        <TabsContent value="playlists">
+          <PlaylistsTab />
         </TabsContent>
       </Tabs>
     </>

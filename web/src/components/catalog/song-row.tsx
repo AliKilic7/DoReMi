@@ -4,14 +4,18 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { LikeButton } from "@/components/catalog/like-button";
-import { DotsIcon, EqualizerIcon, PauseIcon, PlayIcon, QueueIcon } from "@/components/icons";
+import { DotsIcon, EqualizerIcon, PauseIcon, PlayIcon, PlusIcon, QueueIcon } from "@/components/icons";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { usePlaylistMutations, usePlaylists } from "@/hooks/use-playlists";
 import { cn, formatDuration } from "@/lib/utils";
 import { useCurrentSong, usePlayerStore } from "@/stores/player-store";
 import type { SongSummary } from "@/types";
@@ -32,6 +36,8 @@ export function SongRow({ song, index, onPlay, hideAlbum = false, hideArt = fals
   const isPlaying = usePlayerStore((s) => s.isPlaying) && isCurrent;
   const togglePlay = usePlayerStore((s) => s.togglePlay);
   const router = useRouter();
+  const { data: playlists } = usePlaylists();
+  const { addSong, create } = usePlaylistMutations();
 
   const handlePlay = () => (isCurrent ? togglePlay() : onPlay(song));
 
@@ -108,6 +114,49 @@ export function SongRow({ song, index, onPlay, hideAlbum = false, hideArt = fals
             <DropdownMenuItem onSelect={addToQueue}>
               <QueueIcon /> Add to queue
             </DropdownMenuItem>
+            <DropdownMenuSub>
+              <DropdownMenuSubTrigger>
+                <PlusIcon /> Add to playlist
+              </DropdownMenuSubTrigger>
+              <DropdownMenuSubContent>
+                <DropdownMenuItem
+                  onSelect={async () => {
+                    const playlist = await create.mutateAsync({});
+                    addSong.mutate({
+                      id: playlist.id,
+                      songId: song.id,
+                      playlistName: playlist.name,
+                      songTitle: song.title,
+                    });
+                  }}
+                >
+                  <PlusIcon /> New playlist
+                </DropdownMenuItem>
+                {playlists && playlists.length > 0 && <DropdownMenuSeparator />}
+                {playlists?.map((playlist) => (
+                  <DropdownMenuItem
+                    key={playlist.id}
+                    onSelect={() =>
+                      addSong.mutate({
+                        id: playlist.id,
+                        songId: song.id,
+                        playlistName: playlist.name,
+                        songTitle: song.title,
+                      })
+                    }
+                  >
+                    <span
+                      className="size-4 shrink-0 rounded"
+                      style={{
+                        background: playlist.coverUrl ? `url(${playlist.coverUrl})` : playlist.gradient,
+                        backgroundSize: "cover",
+                      }}
+                    />
+                    <span className="truncate">{playlist.name}</span>
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuSubContent>
+            </DropdownMenuSub>
             <DropdownMenuSeparator />
             <DropdownMenuItem onSelect={() => router.push(`/album/${song.album.slug}`)}>
               Go to album

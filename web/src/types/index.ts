@@ -117,6 +117,24 @@ export interface BrowseHome {
   genres: Genre[];
 }
 
+export interface PlaylistSummary {
+  id: string;
+  name: string;
+  description: string | null;
+  gradient: string;
+  coverUrl: string | null;
+  favorite: boolean;
+  pinned: boolean;
+  songCount: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PlaylistDetail extends PlaylistSummary {
+  songs: (SongSummary & { addedAt: string })[];
+  totalDurationSec: number;
+}
+
 export type AlbumSort = "recent" | "title" | "popular";
 export type ArtistSort = "popular" | "name";
 export type SongSort = "trending" | "title" | "recent" | "duration";

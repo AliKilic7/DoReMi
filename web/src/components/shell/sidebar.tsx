@@ -4,7 +4,16 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import type { ComponentType, SVGProps } from "react";
-import { CloseIcon, HeartIcon, HomeIcon, LibraryIcon, LogoIcon, SearchIcon } from "@/components/icons";
+import {
+  CloseIcon,
+  HeartIcon,
+  HomeIcon,
+  LibraryIcon,
+  LogoIcon,
+  PlusIcon,
+  SearchIcon,
+} from "@/components/icons";
+import { usePlaylistMutations, usePlaylists } from "@/hooks/use-playlists";
 import { cn } from "@/lib/utils";
 
 interface NavItem {
@@ -54,6 +63,69 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
   );
 }
 
+/** Playlist rail: pinned first, create button, active highlight. */
+function PlaylistRail({ onNavigate }: { onNavigate?: () => void }) {
+  const pathname = usePathname();
+  const { data: playlists } = usePlaylists();
+  const { create } = usePlaylistMutations();
+
+  return (
+    <div className="mt-6 flex min-h-0 flex-1 flex-col">
+      <div className="mb-1 flex items-center justify-between px-4">
+        <span className="text-xs font-semibold tracking-wide text-subtle uppercase">Playlists</span>
+        <button
+          onClick={() => create.mutate({})}
+          disabled={create.isPending}
+          aria-label="Create playlist"
+          className="focus-ring rounded-full p-1 text-muted-foreground transition-colors hover:bg-white/8 hover:text-foreground"
+        >
+          <PlusIcon className="size-4" />
+        </button>
+      </div>
+
+      <div className="min-h-0 flex-1 space-y-0.5 overflow-y-auto pr-1">
+        {playlists?.map((playlist) => {
+          const href = `/playlist/${playlist.id}`;
+          const active = pathname === href;
+          return (
+            <Link
+              key={playlist.id}
+              href={href}
+              onClick={onNavigate}
+              aria-current={active ? "page" : undefined}
+              className={cn(
+                "focus-ring flex items-center gap-3 rounded-xl px-3 py-2 transition-colors",
+                active ? "bg-white/8 text-foreground" : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              <span
+                className="size-8 shrink-0 rounded-lg bg-cover bg-center shadow"
+                style={{
+                  background: playlist.coverUrl ? `url(${playlist.coverUrl})` : playlist.gradient,
+                  backgroundSize: "cover",
+                }}
+              />
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-sm">{playlist.name}</span>
+                <span className="block truncate text-[11px] text-subtle">
+                  {playlist.pinned && "📌 "}
+                  {playlist.songCount} songs
+                </span>
+              </span>
+              {playlist.favorite && <HeartIcon filled className="size-3.5 shrink-0 text-accent-pink" />}
+            </Link>
+          );
+        })}
+        {playlists && playlists.length === 0 && (
+          <p className="px-4 py-3 text-xs leading-relaxed text-subtle">
+            No playlists yet — hit + to create your first one.
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}
+
 /** Desktop sidebar — fixed column inside the shell grid. */
 export function Sidebar() {
   return (
@@ -63,10 +135,7 @@ export function Sidebar() {
         <span className="font-display text-lg font-semibold tracking-tight">DoReMi</span>
       </Link>
       <NavLinks />
-
-      <div className="mt-auto rounded-xl border border-border p-4 text-xs leading-relaxed text-subtle">
-        Playlists live here soon — create, pin and reorder them in an upcoming update.
-      </div>
+      <PlaylistRail />
     </aside>
   );
 }
@@ -107,6 +176,7 @@ export function MobileSidebar({ open, onClose }: { open: boolean; onClose: () =>
               </button>
             </div>
             <NavLinks onNavigate={onClose} />
+            <PlaylistRail onNavigate={onClose} />
           </motion.aside>
         </>
       )}
