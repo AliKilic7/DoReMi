@@ -1,0 +1,215 @@
+@import "tailwindcss";
+
+/* ---------------------------------- */
+/*  DoReMi design tokens               */
+/* ---------------------------------- */
+
+:root {
+  --background: #08080e;
+  --surface: #0f0f18;
+  --surface-2: #151523;
+  --foreground: #f5f5fa;
+  --muted: #1c1c2b;
+  --muted-foreground: #a3a3b8;
+  --subtle-foreground: #6f6f85;
+
+  --primary: #8b5cf6;
+  --primary-soft: #a78bfa;
+  --primary-strong: #7c3aed;
+  --primary-foreground: #ffffff;
+
+  --accent-pink: #e879f9;
+  --accent-cyan: #22d3ee;
+  --accent-amber: #fbbf24;
+
+  --destructive: #f87171;
+  --success: #34d399;
+
+  --border: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.14);
+  --input: rgba(255, 255, 255, 0.06);
+  --ring: #8b5cf6;
+
+  --radius: 0.75rem;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-subtle: var(--subtle-foreground);
+
+  --color-primary: var(--primary);
+  --color-primary-soft: var(--primary-soft);
+  --color-primary-strong: var(--primary-strong);
+  --color-primary-foreground: var(--primary-foreground);
+
+  --color-accent-pink: var(--accent-pink);
+  --color-accent-cyan: var(--accent-cyan);
+  --color-accent-amber: var(--accent-amber);
+
+  --color-destructive: var(--destructive);
+  --color-success: var(--success);
+
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-space-grotesk), var(--font-geist-sans), sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 0.25rem);
+  --radius-2xl: calc(var(--radius) + 0.5rem);
+
+  --animate-shimmer: shimmer 1.8s linear infinite;
+  --animate-fade-up: fade-up 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+  --animate-float: float 7s ease-in-out infinite;
+  --animate-marquee: marquee 42s linear infinite;
+
+  @keyframes shimmer {
+    from {
+      background-position: 200% 0;
+    }
+    to {
+      background-position: -200% 0;
+    }
+  }
+
+  @keyframes fade-up {
+    from {
+      opacity: 0;
+      transform: translateY(16px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes float {
+    0%,
+    100% {
+      transform: translateY(0) scale(1);
+    }
+    50% {
+      transform: translateY(-18px) scale(1.04);
+    }
+  }
+
+  @keyframes marquee {
+    from {
+      transform: translateX(0);
+    }
+    to {
+      transform: translateX(-50%);
+    }
+  }
+}
+
+/* ---------------------------------- */
+/*  Base                               */
+/* ---------------------------------- */
+
+html {
+  color-scheme: dark;
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+::selection {
+  background: color-mix(in oklab, var(--primary) 45%, transparent);
+  color: var(--foreground);
+}
+
+/* Slim translucent scrollbars */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.14) transparent;
+}
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+*::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.14);
+  border-radius: 9999px;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.24);
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* ---------------------------------- */
+/*  Utilities                          */
+/* ---------------------------------- */
+
+@utility glass {
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(24px) saturate(140%);
+  -webkit-backdrop-filter: blur(24px) saturate(140%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+@utility glass-strong {
+  background: rgba(18, 18, 30, 0.72);
+  backdrop-filter: blur(32px) saturate(160%);
+  -webkit-backdrop-filter: blur(32px) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+@utility text-gradient {
+  background: linear-gradient(
+    100deg,
+    var(--primary-soft) 0%,
+    var(--accent-pink) 50%,
+    var(--accent-cyan) 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Ambient mesh backdrop used on landing / auth pages */
+@utility bg-mesh {
+  background:
+    radial-gradient(42% 38% at 18% 12%, rgba(124, 58, 237, 0.28) 0%, transparent 70%),
+    radial-gradient(36% 34% at 82% 6%, rgba(232, 121, 249, 0.16) 0%, transparent 70%),
+    radial-gradient(50% 44% at 84% 82%, rgba(34, 211, 238, 0.12) 0%, transparent 70%),
+    radial-gradient(38% 36% at 8% 88%, rgba(251, 191, 36, 0.08) 0%, transparent 70%),
+    var(--background);
+}
+
+@utility skeleton-shimmer {
+  background: linear-gradient(
+    100deg,
+    rgba(255, 255, 255, 0.04) 40%,
+    rgba(255, 255, 255, 0.1) 50%,
+    rgba(255, 255, 255, 0.04) 60%
+  );
+  background-size: 200% 100%;
+  animation: var(--animate-shimmer);
+}
+
+/* Consistent focus treatment for keyboard users */
+@utility focus-ring {
+  outline: none;
+  &:focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+}
