@@ -1,0 +1,169 @@
+// ============================================================================
+// DoReMi v2 — YouTube-backed streaming schema (PROPOSAL, not yet active)
+//
+// Design principles
+//   • The catalog lives on YouTube. We NEVER store audio files — only the
+//     metadata needed to render lists and re-resolve streams: title, artist,
+//     thumbnail URL and the YouTube videoId.
+//   • Supabase hosts Postgres + Auth. Profile.id mirrors auth.users.id (UUID
+//     from the verified Supabase JWT). No cross-schema FK — Supabase's auth
+//     schema is managed separately; the API creates a Profile row on first
+//     authenticated request.
+//   • Tracks are cached lazily: the first time any user likes / queues /
+//     plays / playlists a search result, we upsert it by videoId. Personal
+//     tables reference Track, so renames on YouTube's side update everywhere
+//     via the cache row.
+//   • Works identically on plain Postgres for local dev — nothing here is
+//     Supabase-specific except the pooled/direct URL pair.
+// ============================================================================
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  // Supabase: pooled connection (pgbouncer, port 6543) for the app…
+  url       = env("DATABASE_URL")
+  // …and the direct connection (port 5432) for migrations.
+  directUrl = env("DIRECT_URL")
+  provider  = "postgresql"
+}
+
+/// App-level user data. `id` equals Supabase `auth.users.id` (JWT `sub`).
+/// Email, password hashing, OAuth, magic links etc. all live in Supabase Auth.
+model Profile {
+  id          String   @id @db.Uuid
+  username    String   @unique
+  displayName String
+  avatarUrl   String?
+  bio         String?
+  /// User preferences (language, audio quality, notifications, privacy).
+  settings    Json     @default("{}")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  playlists      Playlist[]
+  likes          Like[]
+  playHistory    PlayHistory[]
+  searchHistory  SearchHistory[]
+  followedArtists FollowedArtist[]
+
+  @@map("profiles")
+}
+
+/// Metadata cache for a YouTube track. No audio, no stream URLs — stream URLs
+/// expire within hours, so they are resolved on demand at play time and never
+/// persisted.
+model Track {
+  id           String   @id @default(cuid())
+  /// YouTube video id — the stable global key (11 chars).
+  videoId      String   @unique
+  title        String
+  /// Best-effort artist: YouTube Music artist name, else the channel name.
+  artist       String
+  /// YouTube channel id — links a track to its artist page.
+  channelId    String?
+  thumbnailUrl String
+  durationSec  Int
+  /// When metadata was last refreshed from the source API.
+  cachedAt     DateTime @updatedAt
+  createdAt    DateTime @default(now())
+
+  likes          Like[]
+  playlistTracks PlaylistTrack[]
+  playHistory    PlayHistory[]
+
+  @@index([title])
+  @@index([artist])
+  @@map("tracks")
+}
+
+model Playlist {
+  id          String  @id @default(cuid())
+  name        String
+  description String?
+  /// CSS gradient used until the user uploads a cover.
+  gradient    String
+  coverUrl    String?
+  favorite    Boolean @default(false)
+  pinned      Boolean @default(false)
+
+  ownerId String  @db.Uuid
+  owner   Profile @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+
+  tracks PlaylistTrack[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([ownerId])
+  @@map("playlists")
+}
+
+model PlaylistTrack {
+  id       String   @id @default(cuid())
+  position Int
+  addedAt  DateTime @default(now())
+
+  playlistId String
+  playlist   Playlist @relation(fields: [playlistId], references: [id], onDelete: Cascade)
+  trackId    String
+  track      Track    @relation(fields: [trackId], references: [id], onDelete: Cascade)
+
+  @@unique([playlistId, trackId])
+  @@index([playlistId, position])
+  @@map("playlist_tracks")
+}
+
+model Like {
+  userId    String   @db.Uuid
+  user      Profile  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  trackId   String
+  track     Track    @relation(fields: [trackId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@id([userId, trackId])
+  @@index([userId, createdAt(sort: Desc)])
+  @@map("likes")
+}
+
+/// "Followed artist" is a YouTube channel — denormalized name/thumbnail so the
+/// sidebar and home shelves render without extra API calls.
+model FollowedArtist {
+  userId       String  @db.Uuid
+  user         Profile @relation(fields: [userId], references: [id], onDelete: Cascade)
+  channelId    String
+  name         String
+  thumbnailUrl String?
+  createdAt    DateTime @default(now())
+
+  @@id([userId, channelId])
+  @@map("followed_artists")
+}
+
+/// Powers "recently played" / "continue listening" and play-count style
+/// recommendations. Rows are pruned beyond the newest N per user by the API.
+model PlayHistory {
+  id       String   @id @default(cuid())
+  userId   String   @db.Uuid
+  user     Profile  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  trackId  String
+  track    Track    @relation(fields: [trackId], references: [id], onDelete: Cascade)
+  playedAt DateTime @default(now())
+
+  @@index([userId, playedAt(sort: Desc)])
+  @@map("play_history")
+}
+
+model SearchHistory {
+  id        String   @id @default(cuid())
+  userId    String   @db.Uuid
+  user      Profile  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  query     String
+  createdAt DateTime @default(now())
+
+  @@unique([userId, query])
+  @@index([userId, createdAt(sort: Desc)])
+  @@map("search_history")
+}
