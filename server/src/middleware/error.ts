@@ -29,6 +29,14 @@ export function errorHandler(
     return;
   }
 
+  // http-errors style (thrown by express.static, body-parser, …)
+  if (err instanceof Error && "statusCode" in err && typeof err.statusCode === "number") {
+    res.status(err.statusCode).json({
+      error: { code: "http_error", message: err.statusCode === 404 ? "Not found" : err.message },
+    });
+    return;
+  }
+
   console.error(err);
   res.status(500).json({
     error: {
