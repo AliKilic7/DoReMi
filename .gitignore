@@ -1,0 +1,30 @@
+# dependencies
+node_modules/
+
+# builds
+web/.next/
+web/out/
+server/dist/
+
+# env
+.env
+.env.local
+.env*.local
+
+# generated prisma client
+server/generated/
+
+# database
+server/prisma/migrations/**/migration_lock.toml.bak
+
+# uploads & generated media (dev storage)
+server/storage/
+
+# logs
+*.log
+npm-debug.log*
+
+# misc
+.DS_Store
+*.tsbuildinfo
+next-env.d.ts
