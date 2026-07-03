@@ -2,12 +2,21 @@
 
 import { useEffect, useRef } from "react";
 import { getAnalyser } from "@/lib/audio";
+import { cn } from "@/lib/utils";
 import { usePlayerStore } from "@/stores/player-store";
 
 const BAR_COUNT = 20;
 
 /** Compact frequency-bars visualizer fed by the shared Web Audio analyser. */
-export function Visualizer({ width = 96, height = 28 }: { width?: number; height?: number }) {
+export function Visualizer({
+  width = 96,
+  height = 28,
+  className,
+}: {
+  width?: number;
+  height?: number;
+  className?: string;
+}) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const isPlaying = usePlayerStore((s) => s.isPlaying);
 
@@ -61,7 +70,7 @@ export function Visualizer({ width = 96, height = 28 }: { width?: number; height
       ref={canvasRef}
       style={{ width, height }}
       aria-hidden
-      className="hidden opacity-90 xl:block"
+      className={cn("hidden opacity-90 xl:block", className)}
     />
   );
 }

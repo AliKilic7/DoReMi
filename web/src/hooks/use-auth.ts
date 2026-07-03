@@ -13,7 +13,7 @@ interface UserResponse {
 
 /** Auth actions + current session state, shared across the app. */
 export function useAuth() {
-  const { user, status, setUser, clearUser } = useAuthStore();
+  const { user, status, setUser } = useAuthStore();
   const router = useRouter();
   const queryClient = useQueryClient();
 

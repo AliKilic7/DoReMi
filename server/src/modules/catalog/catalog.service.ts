@@ -47,12 +47,18 @@ export async function listArtists(query: ListArtistsQuery) {
   return { items: items.map(serializeArtist), nextCursor };
 }
 
-export async function getArtistBySlug(slug: string) {
+export async function getArtistBySlug(slug: string, userId?: string) {
   const artist = await prisma.artist.findUnique({
     where: { slug },
     include: { _count: { select: { followers: true } } },
   });
   if (!artist) throw ApiError.notFound("Artist not found");
+
+  const isFollowing = userId
+    ? (await prisma.followArtist.findUnique({
+        where: { userId_artistId: { userId, artistId: artist.id } },
+      })) !== null
+    : false;
 
   const [albums, topSongs] = await Promise.all([
     prisma.album.findMany({
@@ -72,6 +78,7 @@ export async function getArtistBySlug(slug: string) {
     ...serializeArtist(artist),
     bio: artist.bio,
     followerCount: artist._count.followers,
+    isFollowing,
     albums: albums.map(serializeAlbum),
     topSongs: topSongs.map(serializeSong),
   };

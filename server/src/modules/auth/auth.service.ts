@@ -4,6 +4,7 @@ import { prisma } from "../../lib/prisma.js";
 import { ApiError } from "../../utils/errors.js";
 import { signAccessToken, signRefreshToken, verifyRefreshToken } from "../../utils/jwt.js";
 import type { LoginInput, RegisterInput } from "./auth.schemas.js";
+import { DEFAULT_SETTINGS, type UserSettings } from "../users/users.schemas.js";
 
 const SALT_ROUNDS = 10;
 
@@ -15,11 +16,21 @@ export interface PublicUser {
   avatarUrl: string | null;
   bio: string | null;
   createdAt: Date;
+  settings: Required<UserSettings>;
 }
 
 export function toPublicUser(user: User): PublicUser {
   const { id, email, username, displayName, avatarUrl, bio, createdAt } = user;
-  return { id, email, username, displayName, avatarUrl, bio, createdAt };
+  return {
+    id,
+    email,
+    username,
+    displayName,
+    avatarUrl,
+    bio,
+    createdAt,
+    settings: { ...DEFAULT_SETTINGS, ...((user.settings as UserSettings) ?? {}) },
+  };
 }
 
 interface AuthResult {
@@ -61,9 +72,14 @@ export async function register(input: RegisterInput): Promise<AuthResult> {
   return issueTokens(user, input.remember);
 }
 
+// Compared against when the email doesn't exist, so login latency doesn't
+// reveal whether an account exists (timing-based user enumeration).
+const DUMMY_HASH = bcrypt.hashSync("timing-equalizer", SALT_ROUNDS);
+
 export async function login(input: LoginInput): Promise<AuthResult> {
   const user = await prisma.user.findUnique({ where: { email: input.email } });
-  if (!user || !(await bcrypt.compare(input.password, user.passwordHash))) {
+  const passwordOk = await bcrypt.compare(input.password, user?.passwordHash ?? DUMMY_HASH);
+  if (!user || !passwordOk) {
     throw ApiError.unauthorized("Incorrect email or password", "invalid_credentials");
   }
   return issueTokens(user, input.remember);

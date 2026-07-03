@@ -11,7 +11,7 @@ export async function getArtists(req: Request, res: Response): Promise<void> {
 }
 
 export async function getArtist(req: Request, res: Response): Promise<void> {
-  res.json({ artist: await catalog.getArtistBySlug(String(req.params.slug)) });
+  res.json({ artist: await catalog.getArtistBySlug(String(req.params.slug), req.userId) });
 }
 
 export async function getAlbums(req: Request, res: Response): Promise<void> {

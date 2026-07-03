@@ -5,11 +5,19 @@ import cors from "cors";
 import express from "express";
 import { env } from "./config/env.js";
 import { errorHandler, notFoundHandler } from "./middleware/error.js";
+import {
+  apiLimiter,
+  authLimiter,
+  compress,
+  securityHeaders,
+  verifyOrigin,
+} from "./middleware/security.js";
 import { authRouter } from "./modules/auth/auth.router.js";
 import { catalogRouter } from "./modules/catalog/catalog.router.js";
 import { likesRouter } from "./modules/likes/likes.router.js";
 import { COVERS_DIR, playlistsRouter } from "./modules/playlists/playlists.router.js";
 import { searchRouter } from "./modules/search/search.router.js";
+import { AVATARS_DIR, usersRouter } from "./modules/users/users.router.js";
 
 const AUDIO_DIR = path.join(
   path.dirname(fileURLToPath(import.meta.url)),
@@ -22,24 +30,25 @@ export function createApp(): express.Express {
   const app = express();
 
   app.disable("x-powered-by");
+  // Behind a reverse proxy (nginx, a PaaS) the client IP arrives in
+  // X-Forwarded-For; rate limiting keys on it.
+  app.set("trust proxy", 1);
+
+  app.use(securityHeaders);
+  app.use(compress);
   app.use(cors({ origin: env.CORS_ORIGIN, credentials: true }));
+  app.use(verifyOrigin);
   app.use(express.json({ limit: "1mb" }));
   app.use(cookieParser());
 
   app.get("/api/health", (_req, res) => {
-    res.json({ status: "ok", uptime: process.uptime() });
+    res.json({ status: "ok" });
   });
 
-  app.use("/api/auth", authRouter);
-  app.use("/api", likesRouter);
-  app.use("/api", playlistsRouter);
-  app.use("/api", catalogRouter);
-  app.use("/api/search", searchRouter);
-
-  // Uploaded playlist covers
+  // Static media first — excluded from the general API rate limit since
+  // audio seeking legitimately fires many Range requests.
   app.use("/api/covers", express.static(COVERS_DIR, { maxAge: "7d", fallthrough: false }));
-
-  // Seeded audio. express.static handles Range requests, so seeking works.
+  app.use("/api/avatars", express.static(AVATARS_DIR, { maxAge: "7d", fallthrough: false }));
   app.use(
     "/api/audio",
     express.static(AUDIO_DIR, {
@@ -48,6 +57,14 @@ export function createApp(): express.Express {
       fallthrough: false,
     }),
   );
+
+  app.use("/api/auth", authLimiter, authRouter);
+  app.use("/api", apiLimiter);
+  app.use("/api", usersRouter);
+  app.use("/api", likesRouter);
+  app.use("/api", playlistsRouter);
+  app.use("/api", catalogRouter);
+  app.use("/api/search", searchRouter);
 
   app.use(notFoundHandler);
   app.use(errorHandler);

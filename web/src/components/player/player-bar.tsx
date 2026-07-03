@@ -4,6 +4,8 @@ import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
 import { useState } from "react";
 import {
+  ExpandIcon,
+  MinimizeIcon,
   PauseIcon,
   PlayIcon,
   QueueIcon,
@@ -14,6 +16,7 @@ import {
   VolumeIcon,
 } from "@/components/icons";
 import { LikeButton } from "@/components/catalog/like-button";
+import { MiniPlayer } from "@/components/player/mini-player";
 import { Slider } from "@/components/ui/slider";
 import { Visualizer } from "@/components/player/visualizer";
 import { cn, formatDuration } from "@/lib/utils";
@@ -67,6 +70,7 @@ export function PlayerBar() {
   const currentTime = usePlayerStore((s) => s.currentTime);
   const duration = usePlayerStore((s) => s.duration);
   const queueOpen = usePlayerStore((s) => s.queueOpen);
+  const view = usePlayerStore((s) => s.view);
   const store = usePlayerStore;
 
   // While dragging we show the drag position, not the playhead.
@@ -77,9 +81,11 @@ export function PlayerBar() {
   const volumeLevel: 0 | 1 | 2 = muted || volume === 0 ? 0 : volume < 0.5 ? 1 : 2;
 
   return (
-    <AnimatePresence>
-      {song && (
+    <AnimatePresence mode="popLayout">
+      {song && view === "mini" && <MiniPlayer key="mini" song={song} />}
+      {song && view !== "mini" && (
         <motion.div
+          key="bar"
           initial={{ y: 96, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: 96, opacity: 0 }}
@@ -90,11 +96,13 @@ export function PlayerBar() {
         >
           {/* now playing */}
           <div className="flex w-56 min-w-0 shrink-0 items-center gap-3">
-            <motion.div
+            <motion.button
               key={song.id}
               initial={{ scale: 0.85, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              className="size-12 shrink-0 rounded-lg shadow-lg"
+              onClick={() => store.getState().setView("full")}
+              aria-label="Open full screen player"
+              className="focus-ring size-12 shrink-0 rounded-lg shadow-lg transition-transform hover:scale-105"
               style={{ background: song.gradient }}
             />
             <div className="min-w-0">
@@ -198,6 +206,12 @@ export function PlayerBar() {
               step={1}
               onValueChange={([value]) => store.getState().setVolume((value ?? 0) / 100)}
             />
+            <ControlButton label="Full screen player" onClick={() => store.getState().setView("full")}>
+              <ExpandIcon />
+            </ControlButton>
+            <ControlButton label="Minimize player" onClick={() => store.getState().setView("mini")}>
+              <MinimizeIcon />
+            </ControlButton>
           </div>
         </motion.div>
       )}

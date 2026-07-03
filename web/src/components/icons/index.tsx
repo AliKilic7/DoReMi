@@ -294,6 +294,28 @@ export function EyeIcon({ off = false, ...props }: IconProps & { off?: boolean }
   );
 }
 
+export function ExpandIcon(props: IconProps) {
+  return (
+    <svg {...base(props)}>
+      <path d="M14 4.5h5.5V10" />
+      <path d="M19.5 4.5 13 11" />
+      <path d="M10 19.5H4.5V14" />
+      <path d="m4.5 19.5 6.5-6.5" />
+    </svg>
+  );
+}
+
+export function MinimizeIcon(props: IconProps) {
+  return (
+    <svg {...base(props)}>
+      <path d="M10 4.5V10H4.5" />
+      <path d="M10 10 3.5 3.5" />
+      <path d="M14 19.5V14h5.5" />
+      <path d="m14 14 6.5 6.5" />
+    </svg>
+  );
+}
+
 export function DotsIcon(props: IconProps) {
   return (
     <svg {...base(props)} fill="currentColor" stroke="none">

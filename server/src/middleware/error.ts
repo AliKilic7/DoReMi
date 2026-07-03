@@ -1,5 +1,6 @@
 import type { NextFunction, Request, Response } from "express";
 import { ZodError } from "zod";
+import { Prisma } from "../../generated/prisma/index.js";
 import { ApiError } from "../utils/errors.js";
 import { isProd } from "../config/env.js";
 
@@ -26,6 +27,14 @@ export function errorHandler(
 
   if (err instanceof ApiError) {
     res.status(err.status).json({ error: { code: err.code, message: err.message } });
+    return;
+  }
+
+  // Unique-constraint races (e.g. two simultaneous registrations) → 409
+  if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002") {
+    res.status(409).json({
+      error: { code: "conflict", message: "That value is already taken — try again" },
+    });
     return;
   }
 

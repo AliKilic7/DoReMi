@@ -7,7 +7,7 @@ export const catalogRouter = Router();
 catalogRouter.get("/genres", controller.getGenres);
 
 catalogRouter.get("/artists", controller.getArtists);
-catalogRouter.get("/artists/:slug", controller.getArtist);
+catalogRouter.get("/artists/:slug", optionalAuth, controller.getArtist);
 
 catalogRouter.get("/albums", controller.getAlbums);
 catalogRouter.get("/albums/:slug", controller.getAlbum);

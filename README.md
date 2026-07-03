@@ -1,11 +1,48 @@
 # DoReMi 🎵
 
+[![CI](https://github.com/AliKilic7/DoReMi/actions/workflows/ci.yml/badge.svg)](https://github.com/AliKilic7/DoReMi/actions/workflows/ci.yml)
+
 A premium, Spotify-inspired music streaming web application with an original design language —
 dark glassmorphism, gradient artwork, smooth micro-animations.
 
-> **Status**: Features 1–6 shipped — foundation & auth, seeded music catalog with synthesized audio, app shell with home / search / library / album / artist pages, the full audio player (shuffle, repeat, seek, volume, keyboard shortcuts, visualizer), drag-and-drop queue management, likes with a Liked Songs page, and full playlist management (create/rename/delete, add/remove/reorder songs, cover upload, favorite & pin).
+> **Status**: Complete (features 1–8). Landing & auth · seeded catalog with synthesized playable audio · home / search / library / album / artist / playlist / liked / profile / settings pages · full audio player with queue, shuffle, repeat, visualizer, mini & full-screen modes · likes, follows, personalized recommendations.
+
+## Feature highlights
+
+- **Player** — real audio playback with seek, shuffle (lossless toggle), repeat off/all/one, volume/mute, Media Session (OS media keys), a live Web-Audio visualizer, a floating **mini player** and an immersive **full-screen player** (press `F`).
+- **Keyboard shortcuts** — `Space` play/pause · `←/→` seek ±5s · `Shift+←/→` prev/next · `↑/↓` volume · `M` mute · `F` full screen · `/` search.
+- **Queue** — side panel with drag & drop reordering, remove, clear, add-to-queue from any song's ⋯ menu.
+- **Playlists** — create/rename/delete, add/remove/reorder songs (persisted drag & drop), cover upload, favorite & pin to sidebar.
+- **Likes & follows** — optimistic hearts everywhere, a Liked Songs page, artist following.
+- **Personalized home** — recently played, continue listening, made-for-you albums (genre affinity), your artists, trending, new releases.
+- **Search** — debounced instant results with top-result ranking and per-user search history.
+- **Accessibility** — keyboard navigable, ARIA-labelled controls, visible focus rings, `prefers-reduced-motion` support.
+- **Security** — helmet headers, rate limiting (failed-attempt based on auth), SameSite cookies + Origin verification, magic-byte upload validation, startup secret validation. Details in [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
 
 **Demo account**: `demo@doremi.dev` / `demo1234` (after `npm run db:seed`)
+
+## Documentation
+
+- [Deployment & environment guide](docs/DEPLOYMENT.md)
+- [API reference](docs/API.md)
+
+## Testing
+
+```bash
+npm test          # 67 unit + integration tests (vitest; API tests need Postgres running)
+npm run test:e2e  # 7 Playwright browser flows (needs `npm run dev` + seeded DB)
+npm run lint      # eslint, zero warnings allowed
+```
+
+Coverage: auth (register/login/refresh/logout/session revocation), catalog pagination
+and filters, search + history, likes, playlist lifecycle + ownership enforcement,
+upload signature rejection, player store logic (shuffle/repeat/queue editing), the
+API client's refresh-and-retry behavior, plus full browser flows for every page and
+player mode — including real audio playback and drag & drop.
+
+**CI**: every push runs lint → typecheck → tests → builds against a Postgres 16
+service container, then a second job builds for production, boots both servers and
+runs the full Playwright E2E suite ([.github/workflows/ci.yml](.github/workflows/ci.yml)).
 
 ## Tech stack
 

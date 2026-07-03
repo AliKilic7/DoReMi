@@ -28,3 +28,6 @@ npm-debug.log*
 .DS_Store
 *.tsbuildinfo
 next-env.d.ts
+
+# e2e screenshots
+e2e/.artifacts/

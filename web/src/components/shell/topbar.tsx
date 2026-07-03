@@ -62,13 +62,15 @@ export function Topbar({ onMenuClick }: { onMenuClick: () => void }) {
                 <span className="mt-0.5 block truncate">@{user.username}</span>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem disabled>
-                <UserIcon /> Profile
-                <span className="ml-auto text-[10px] text-subtle uppercase">soon</span>
+              <DropdownMenuItem asChild>
+                <Link href="/profile">
+                  <UserIcon /> Profile
+                </Link>
               </DropdownMenuItem>
-              <DropdownMenuItem disabled>
-                <SettingsIcon /> Settings
-                <span className="ml-auto text-[10px] text-subtle uppercase">soon</span>
+              <DropdownMenuItem asChild>
+                <Link href="/settings">
+                  <SettingsIcon /> Settings
+                </Link>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem

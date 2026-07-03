@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { memo } from "react";
 import { toast } from "sonner";
 import { LikeButton } from "@/components/catalog/like-button";
 import { DotsIcon, EqualizerIcon, PauseIcon, PlayIcon, PlusIcon, QueueIcon } from "@/components/icons";
@@ -31,7 +32,13 @@ interface SongRowProps {
 }
 
 /** One track in any list: index/play, art, title/artist, album, actions, duration. */
-export function SongRow({ song, index, onPlay, hideAlbum = false, hideArt = false }: SongRowProps) {
+export const SongRow = memo(function SongRow({
+  song,
+  index,
+  onPlay,
+  hideAlbum = false,
+  hideArt = false,
+}: SongRowProps) {
   const isCurrent = useCurrentSong()?.id === song.id;
   const isPlaying = usePlayerStore((s) => s.isPlaying) && isCurrent;
   const togglePlay = usePlayerStore((s) => s.togglePlay);
@@ -169,4 +176,4 @@ export function SongRow({ song, index, onPlay, hideAlbum = false, hideArt = fals
       </div>
     </div>
   );
-}
+});

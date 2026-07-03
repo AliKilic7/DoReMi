@@ -5,9 +5,9 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { Router } from "express";
 import type { Request, Response } from "express";
-import multer from "multer";
 import { requireAuth } from "../../middleware/auth.js";
 import { ApiError } from "../../utils/errors.js";
+import { assertImageSignature, IMAGE_EXTENSIONS, imageUpload } from "../../utils/uploads.js";
 import {
   addSongSchema,
   createPlaylistSchema,
@@ -23,18 +23,6 @@ export const COVERS_DIR = path.join(
   "covers",
 );
 mkdirSync(COVERS_DIR, { recursive: true });
-
-const COVER_TYPES: Record<string, string> = {
-  "image/jpeg": "jpg",
-  "image/png": "png",
-  "image/webp": "webp",
-};
-
-const upload = multer({
-  storage: multer.memoryStorage(),
-  limits: { fileSize: 2 * 1024 * 1024 },
-  fileFilter: (_req, file, cb) => cb(null, file.mimetype in COVER_TYPES),
-});
 
 export const playlistsRouter = Router();
 
@@ -85,10 +73,11 @@ playlistsRouter.put("/playlists/:id/songs", requireAuth, async (req: Request, re
 playlistsRouter.post(
   "/playlists/:id/cover",
   requireAuth,
-  upload.single("cover"),
+  imageUpload.single("cover"),
   async (req: Request, res: Response) => {
     if (!req.file) throw ApiError.badRequest("Upload a JPEG, PNG or WebP up to 2MB", "invalid_cover");
-    const ext = COVER_TYPES[req.file.mimetype]!;
+    assertImageSignature(req.file.buffer, req.file.mimetype);
+    const ext = IMAGE_EXTENSIONS[req.file.mimetype]!;
     const fileName = `${String(req.params.id)}-${randomUUID().slice(0, 8)}.${ext}`;
     await writeFile(path.join(COVERS_DIR, fileName), req.file.buffer);
     const playlist = await service.setCover(req.userId!, String(req.params.id), `/api/covers/${fileName}`);

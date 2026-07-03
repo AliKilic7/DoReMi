@@ -22,6 +22,8 @@ interface PlayerState {
   pendingSeek: number | null;
   /** Whether the queue side panel is open. */
   queueOpen: boolean;
+  /** Player chrome: full bar, floating mini pill, or full-screen overlay. */
+  view: "bar" | "mini" | "full";
 
   playSong: (song: SongSummary, context?: SongSummary[]) => void;
   playAt: (index: number) => void;
@@ -43,6 +45,7 @@ interface PlayerState {
   setUpcoming: (songs: SongSummary[]) => void;
   clearUpcoming: () => void;
   toggleQueue: () => void;
+  setView: (view: "bar" | "mini" | "full") => void;
 }
 
 function shuffled<T>(items: T[]): T[] {
@@ -69,6 +72,7 @@ export const usePlayerStore = create<PlayerState>()(
       duration: 0,
       pendingSeek: null,
       queueOpen: false,
+      view: "bar",
 
       playSong: (song, context) => {
         const base = context && context.length > 0 ? context : [song];
@@ -140,8 +144,10 @@ export const usePlayerStore = create<PlayerState>()(
       clearPendingSeek: () => set({ pendingSeek: null }),
       setProgress: (currentTime, duration) => set({ currentTime, duration }),
 
-      setVolume: (volume) =>
-        set({ volume: Math.min(1, Math.max(0, volume)), muted: volume === 0 ? true : false }),
+      setVolume: (volume) => {
+        const clamped = Math.min(1, Math.max(0, volume));
+        set({ volume: clamped, muted: clamped === 0 });
+      },
       toggleMute: () => set((state) => ({ muted: !state.muted })),
 
       toggleShuffle: () => {
@@ -205,6 +211,8 @@ export const usePlayerStore = create<PlayerState>()(
       },
 
       toggleQueue: () => set((state) => ({ queueOpen: !state.queueOpen })),
+
+      setView: (view) => set({ view }),
     }),
     {
       name: "doremi-player",
