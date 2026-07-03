@@ -1,5 +1,15 @@
 /** Shared domain types mirrored from the API's public payloads. */
 
+export interface UserSettings {
+  language: "en" | "tr" | "es" | "de" | "fr";
+  audioQuality: "data-saver" | "normal" | "high" | "lossless";
+  autoplay: boolean;
+  notifyNewMusic: boolean;
+  notifyProduct: boolean;
+  showActivity: boolean;
+  personalizedRecs: boolean;
+}
+
 export interface User {
   id: string;
   email: string;
@@ -8,6 +18,7 @@ export interface User {
   avatarUrl: string | null;
   bio: string | null;
   createdAt: string;
+  settings: UserSettings;
 }
 
 export interface ApiErrorPayload {
@@ -82,8 +93,15 @@ export interface SongSummary {
 export interface ArtistDetail extends ArtistSummary {
   bio: string;
   followerCount: number;
+  isFollowing: boolean;
   albums: AlbumSummary[];
   topSongs: SongSummary[];
+}
+
+export interface PersonalHome {
+  recentlyPlayed: SongSummary[];
+  continueListening: AlbumSummary[];
+  followedArtists: ArtistSummary[];
 }
 
 export interface AlbumDetail extends AlbumSummary {

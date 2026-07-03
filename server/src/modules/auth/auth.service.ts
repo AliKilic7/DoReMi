@@ -4,6 +4,7 @@ import { prisma } from "../../lib/prisma.js";
 import { ApiError } from "../../utils/errors.js";
 import { signAccessToken, signRefreshToken, verifyRefreshToken } from "../../utils/jwt.js";
 import type { LoginInput, RegisterInput } from "./auth.schemas.js";
+import { DEFAULT_SETTINGS, type UserSettings } from "../users/users.schemas.js";
 
 const SALT_ROUNDS = 10;
 
@@ -15,11 +16,21 @@ export interface PublicUser {
   avatarUrl: string | null;
   bio: string | null;
   createdAt: Date;
+  settings: Required<UserSettings>;
 }
 
 export function toPublicUser(user: User): PublicUser {
   const { id, email, username, displayName, avatarUrl, bio, createdAt } = user;
-  return { id, email, username, displayName, avatarUrl, bio, createdAt };
+  return {
+    id,
+    email,
+    username,
+    displayName,
+    avatarUrl,
+    bio,
+    createdAt,
+    settings: { ...DEFAULT_SETTINGS, ...((user.settings as UserSettings) ?? {}) },
+  };
 }
 
 interface AuthResult {

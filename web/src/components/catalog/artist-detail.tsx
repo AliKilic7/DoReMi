@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ApiError } from "@/lib/api";
 import { useArtist } from "@/hooks/use-catalog";
+import { useFollowArtist } from "@/hooks/use-user";
 import { usePlay } from "@/hooks/use-play";
 import { formatCompactNumber } from "@/lib/utils";
 
@@ -37,6 +38,7 @@ function DetailSkeleton() {
 export function ArtistDetailView({ slug }: { slug: string }) {
   const { data: artist, isPending, error, refetch } = useArtist(slug);
   const play = usePlay();
+  const follow = useFollowArtist(slug);
   const [showAllSongs, setShowAllSongs] = useState(false);
 
   if (isPending) return <DetailSkeleton />;
@@ -93,6 +95,16 @@ export function ArtistDetailView({ slug }: { slug: string }) {
         >
           <PlayIcon className="size-5 translate-x-px" />
           Play
+        </Button>
+        <Button
+          variant={artist.isFollowing ? "secondary" : "outline"}
+          onClick={() =>
+            follow.mutate({ artistId: artist.id, following: artist.isFollowing })
+          }
+          disabled={follow.isPending}
+          aria-pressed={artist.isFollowing}
+        >
+          {artist.isFollowing ? "Following ✓" : "Follow"}
         </Button>
       </div>
 

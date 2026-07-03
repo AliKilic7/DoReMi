@@ -10,6 +10,7 @@ import { catalogRouter } from "./modules/catalog/catalog.router.js";
 import { likesRouter } from "./modules/likes/likes.router.js";
 import { COVERS_DIR, playlistsRouter } from "./modules/playlists/playlists.router.js";
 import { searchRouter } from "./modules/search/search.router.js";
+import { AVATARS_DIR, usersRouter } from "./modules/users/users.router.js";
 
 const AUDIO_DIR = path.join(
   path.dirname(fileURLToPath(import.meta.url)),
@@ -31,13 +32,15 @@ export function createApp(): express.Express {
   });
 
   app.use("/api/auth", authRouter);
+  app.use("/api", usersRouter);
   app.use("/api", likesRouter);
   app.use("/api", playlistsRouter);
   app.use("/api", catalogRouter);
   app.use("/api/search", searchRouter);
 
-  // Uploaded playlist covers
+  // Uploaded playlist covers & avatars
   app.use("/api/covers", express.static(COVERS_DIR, { maxAge: "7d", fallthrough: false }));
+  app.use("/api/avatars", express.static(AVATARS_DIR, { maxAge: "7d", fallthrough: false }));
 
   // Seeded audio. express.static handles Range requests, so seeking works.
   app.use(

@@ -7,12 +7,14 @@ import { ShelfSkeleton } from "@/components/catalog/skeletons";
 import { NoteIcon } from "@/components/icons";
 import { EmptyState } from "@/components/catalog/empty-state";
 import { useBrowseHome } from "@/hooks/use-catalog";
+import { usePersonalHome } from "@/hooks/use-user";
 import { usePlay } from "@/hooks/use-play";
 import { formatCompactNumber, greeting } from "@/lib/utils";
 import { useAuthStore } from "@/stores/auth-store";
 
 export default function HomePage() {
   const { data, isPending, isError, refetch } = useBrowseHome();
+  const personal = usePersonalHome();
   const user = useAuthStore((s) => s.user);
   const play = usePlay();
 
@@ -50,6 +52,35 @@ export default function HomePage() {
 
         {data && (
           <>
+            {personal.data && personal.data.recentlyPlayed.length > 0 && (
+              <Shelf title="Recently played">
+                {personal.data.recentlyPlayed.slice(0, 6).map((song) => (
+                  <MediaCard
+                    key={song.id}
+                    href={`/album/${song.album.slug}`}
+                    title={song.title}
+                    subtitle={song.artist.name}
+                    gradient={song.gradient}
+                    onPlay={() => play(song, personal.data!.recentlyPlayed)}
+                  />
+                ))}
+              </Shelf>
+            )}
+
+            {personal.data && personal.data.continueListening.length > 0 && (
+              <Shelf title="Continue listening">
+                {personal.data.continueListening.slice(0, 6).map((album) => (
+                  <MediaCard
+                    key={album.id}
+                    href={`/album/${album.slug}`}
+                    title={album.title}
+                    subtitle={album.artist.name}
+                    gradient={album.gradient}
+                  />
+                ))}
+              </Shelf>
+            )}
+
             <Shelf title="Trending now" href="/library?tab=songs">
               {data.trendingSongs.slice(0, 6).map((song) => (
                 <MediaCard
@@ -74,6 +105,21 @@ export default function HomePage() {
                 />
               ))}
             </Shelf>
+
+            {personal.data && personal.data.followedArtists.length > 0 && (
+              <Shelf title="Your artists">
+                {personal.data.followedArtists.slice(0, 6).map((artist) => (
+                  <MediaCard
+                    key={artist.id}
+                    href={`/artist/${artist.slug}`}
+                    title={artist.name}
+                    subtitle={`${formatCompactNumber(artist.monthlyListeners)} monthly listeners`}
+                    gradient={artist.gradient}
+                    round
+                  />
+                ))}
+              </Shelf>
+            )}
 
             <Shelf title="Popular artists" href="/library?tab=artists">
               {data.popularArtists.slice(0, 6).map((artist) => (
