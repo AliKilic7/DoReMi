@@ -31,3 +31,6 @@ next-env.d.ts
 
 # e2e screenshots
 e2e/.artifacts/
+
+# database backups
+backups/

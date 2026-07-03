@@ -14,7 +14,9 @@
     "db:seed": "npm run db:seed -w server",
     "lint": "npm run lint -w web",
     "test": "npm run test -w server && npm run test -w web",
-    "test:e2e": "node e2e/run.mjs"
+    "test:e2e": "node e2e/run.mjs",
+    "db:backup": "bash scripts/db-backup.sh",
+    "db:restore": "bash scripts/db-restore.sh"
   },
   "devDependencies": {
     "concurrently": "^9.2.3",

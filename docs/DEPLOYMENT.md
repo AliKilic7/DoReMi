@@ -3,7 +3,8 @@
 ## Requirements
 
 - Node.js 22+
-- PostgreSQL 14+
+- PostgreSQL 14+ — `docker compose up -d db` provides a ready Postgres 16
+  (see [DATABASE.md](DATABASE.md) for schema, migrations, backups and pooling)
 - ~500 MB disk for the seeded audio catalog (generated locally, never committed)
 
 ## Environment variables

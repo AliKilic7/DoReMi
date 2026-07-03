@@ -25,6 +25,7 @@ dark glassmorphism, gradient artwork, smooth micro-animations.
 
 - [Deployment & environment guide](docs/DEPLOYMENT.md)
 - [API reference](docs/API.md)
+- [Database guide](docs/DATABASE.md) — schema, indexing, migrations, backups, pooling
 
 ## Testing
 

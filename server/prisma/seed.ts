@@ -182,6 +182,16 @@ async function seedDemoUser(songIds: string[]) {
 }
 
 async function main() {
+  // The seed WIPES the catalog and all user-generated content that hangs off
+  // it. Guard against running it on a production database by accident.
+  if (process.env.NODE_ENV === "production" && process.env.FORCE_SEED !== "1") {
+    console.error(
+      "✋ Refusing to seed in production — this destroys existing data. " +
+        "Set FORCE_SEED=1 if you really mean it.",
+    );
+    process.exit(1);
+  }
+
   console.log("Seeding DoReMi…");
 
   // wipe catalog + demo content (order respects FK constraints via cascades)

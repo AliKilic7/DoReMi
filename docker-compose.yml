@@ -1,0 +1,23 @@
+# Local/production Postgres for DoReMi.
+#   docker compose up -d db
+# Data persists in the named volume `doremi_pgdata`.
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-doremi}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-doremi_dev}
+      POSTGRES_DB: ${POSTGRES_DB:-doremi}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - doremi_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-doremi} -d ${POSTGRES_DB:-doremi}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  doremi_pgdata:
