@@ -21,5 +21,178 @@ model User {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
+  playlists     Playlist[]
+  likes         Like[]
+  follows       FollowArtist[]
+  playHistory   PlayHistory[]
+  searchHistory SearchHistory[]
+
   @@map("users")
+}
+
+model Genre {
+  id       String @id @default(cuid())
+  name     String @unique
+  slug     String @unique
+  /// CSS gradient rendered as the genre tile artwork.
+  gradient String
+
+  albums Album[]
+  songs  Song[]
+
+  @@map("genres")
+}
+
+model Artist {
+  id               String @id @default(cuid())
+  name             String
+  slug             String @unique
+  bio              String
+  monthlyListeners Int
+  /// CSS gradient rendered as the artist portrait.
+  gradient         String
+
+  albums    Album[]
+  songs     Song[]
+  followers FollowArtist[]
+
+  createdAt DateTime @default(now())
+
+  @@index([monthlyListeners(sort: Desc)])
+  @@map("artists")
+}
+
+model Album {
+  id          String   @id @default(cuid())
+  title       String
+  slug        String   @unique
+  releaseDate DateTime
+  /// CSS gradient rendered as the album cover.
+  gradient    String
+
+  artistId String
+  artist   Artist @relation(fields: [artistId], references: [id], onDelete: Cascade)
+  genreId  String
+  genre    Genre  @relation(fields: [genreId], references: [id])
+
+  songs Song[]
+
+  createdAt DateTime @default(now())
+
+  @@index([artistId])
+  @@index([releaseDate(sort: Desc)])
+  @@map("albums")
+}
+
+model Song {
+  id          String @id @default(cuid())
+  title       String
+  trackNumber Int
+  durationSec Int
+  /// Streaming path served by the API (e.g. /api/audio/<file>.wav).
+  audioUrl    String
+  playCount   Int    @default(0)
+
+  albumId  String
+  album    Album  @relation(fields: [albumId], references: [id], onDelete: Cascade)
+  artistId String
+  artist   Artist @relation(fields: [artistId], references: [id], onDelete: Cascade)
+  genreId  String
+  genre    Genre  @relation(fields: [genreId], references: [id])
+
+  likes         Like[]
+  playlistSongs PlaylistSong[]
+  playHistory   PlayHistory[]
+
+  createdAt DateTime @default(now())
+
+  @@index([albumId])
+  @@index([artistId])
+  @@index([playCount(sort: Desc)])
+  @@index([title])
+  @@map("songs")
+}
+
+model Playlist {
+  id          String  @id @default(cuid())
+  name        String
+  description String?
+  /// CSS gradient cover, replaced by coverUrl when the user uploads one.
+  gradient    String
+  coverUrl    String?
+  favorite    Boolean @default(false)
+  pinned      Boolean @default(false)
+
+  ownerId String
+  owner   User   @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+
+  songs PlaylistSong[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([ownerId])
+  @@map("playlists")
+}
+
+model PlaylistSong {
+  id       String   @id @default(cuid())
+  position Int
+  addedAt  DateTime @default(now())
+
+  playlistId String
+  playlist   Playlist @relation(fields: [playlistId], references: [id], onDelete: Cascade)
+  songId     String
+  song       Song     @relation(fields: [songId], references: [id], onDelete: Cascade)
+
+  @@unique([playlistId, songId])
+  @@index([playlistId, position])
+  @@map("playlist_songs")
+}
+
+model Like {
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  songId    String
+  song      Song     @relation(fields: [songId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@id([userId, songId])
+  @@index([userId, createdAt(sort: Desc)])
+  @@map("likes")
+}
+
+model FollowArtist {
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  artistId  String
+  artist    Artist   @relation(fields: [artistId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@id([userId, artistId])
+  @@map("follow_artists")
+}
+
+model PlayHistory {
+  id       String   @id @default(cuid())
+  userId   String
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  songId   String
+  song     Song     @relation(fields: [songId], references: [id], onDelete: Cascade)
+  playedAt DateTime @default(now())
+
+  @@index([userId, playedAt(sort: Desc)])
+  @@map("play_history")
+}
+
+model SearchHistory {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  query     String
+  createdAt DateTime @default(now())
+
+  @@unique([userId, query])
+  @@index([userId, createdAt(sort: Desc)])
+  @@map("search_history")
 }
