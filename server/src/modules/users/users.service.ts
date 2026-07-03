@@ -103,12 +103,32 @@ export async function personalHome(userId: string) {
     }
   }
 
-  const [albums, follows] = await Promise.all([
+  // genre affinity from history → recommend unheard albums in those genres
+  const genreCounts = new Map<string, number>();
+  const heardAlbums = new Set(history.map((entry) => entry.song.album.id));
+  for (const entry of history) {
+    genreCounts.set(entry.song.genreId, (genreCounts.get(entry.song.genreId) ?? 0) + 1);
+  }
+  const topGenres = [...genreCounts.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 3)
+    .map(([genreId]) => genreId);
+
+  const [albums, follows, recommended] = await Promise.all([
     prisma.album.findMany({ where: { id: { in: albumIds } }, include: albumInclude }),
     prisma.followArtist.findMany({
       where: { userId },
       orderBy: { createdAt: "desc" },
       include: { artist: true },
+    }),
+    prisma.album.findMany({
+      where: {
+        id: { notIn: [...heardAlbums] },
+        ...(topGenres.length > 0 ? { genreId: { in: topGenres } } : {}),
+      },
+      orderBy: [{ artist: { monthlyListeners: "desc" } }, { releaseDate: "desc" }],
+      take: 8,
+      include: albumInclude,
     }),
   ]);
   const albumsById = new Map(albums.map((album) => [album.id, album]));
@@ -120,5 +140,6 @@ export async function personalHome(userId: string) {
       .filter((album) => album !== undefined)
       .map(serializeAlbum),
     followedArtists: follows.map((follow) => serializeArtist(follow.artist)),
+    recommended: recommended.map(serializeAlbum),
   };
 }

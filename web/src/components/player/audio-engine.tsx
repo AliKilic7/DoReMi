@@ -142,6 +142,10 @@ export function AudioEngine() {
         case "M":
           store.toggleMute();
           break;
+        case "f":
+        case "F":
+          if (hasTrack) store.setView(store.view === "full" ? "bar" : "full");
+          break;
       }
     }
 

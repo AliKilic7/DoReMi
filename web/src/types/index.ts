@@ -102,6 +102,7 @@ export interface PersonalHome {
   recentlyPlayed: SongSummary[];
   continueListening: AlbumSummary[];
   followedArtists: ArtistSummary[];
+  recommended: AlbumSummary[];
 }
 
 export interface AlbumDetail extends AlbumSummary {

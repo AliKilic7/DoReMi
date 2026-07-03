@@ -3,7 +3,18 @@
 A premium, Spotify-inspired music streaming web application with an original design language —
 dark glassmorphism, gradient artwork, smooth micro-animations.
 
-> **Status**: Features 1–7 shipped — foundation & auth, seeded music catalog with synthesized audio, app shell with home / search / library / album / artist pages, the full audio player (shuffle, repeat, seek, volume, keyboard shortcuts, visualizer), drag-and-drop queue management, likes with a Liked Songs page, full playlist management, and now profiles (avatar upload, password change), auto-saving settings, artist follows and a personalized home (recently played, continue listening, your artists).
+> **Status**: Complete (features 1–8). Landing & auth · seeded catalog with synthesized playable audio · home / search / library / album / artist / playlist / liked / profile / settings pages · full audio player with queue, shuffle, repeat, visualizer, mini & full-screen modes · likes, follows, personalized recommendations.
+
+## Feature highlights
+
+- **Player** — real audio playback with seek, shuffle (lossless toggle), repeat off/all/one, volume/mute, Media Session (OS media keys), a live Web-Audio visualizer, a floating **mini player** and an immersive **full-screen player** (press `F`).
+- **Keyboard shortcuts** — `Space` play/pause · `←/→` seek ±5s · `Shift+←/→` prev/next · `↑/↓` volume · `M` mute · `F` full screen · `/` search.
+- **Queue** — side panel with drag & drop reordering, remove, clear, add-to-queue from any song's ⋯ menu.
+- **Playlists** — create/rename/delete, add/remove/reorder songs (persisted drag & drop), cover upload, favorite & pin to sidebar.
+- **Likes & follows** — optimistic hearts everywhere, a Liked Songs page, artist following.
+- **Personalized home** — recently played, continue listening, made-for-you albums (genre affinity), your artists, trending, new releases.
+- **Search** — debounced instant results with top-result ranking and per-user search history.
+- **Accessibility** — keyboard navigable, ARIA-labelled controls, visible focus rings, `prefers-reduced-motion` support.
 
 **Demo account**: `demo@doremi.dev` / `demo1234` (after `npm run db:seed`)
 

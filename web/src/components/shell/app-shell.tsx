@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
 import { AudioEngine } from "@/components/player/audio-engine";
+import { FullscreenPlayer } from "@/components/player/fullscreen-player";
 import { PlayerBar } from "@/components/player/player-bar";
 import { QueuePanel } from "@/components/player/queue-panel";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -67,6 +68,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <AudioEngine />
       <PlayerBar />
       <QueuePanel />
+      <FullscreenPlayer />
     </div>
   );
 }

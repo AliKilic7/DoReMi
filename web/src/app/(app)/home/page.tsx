@@ -94,6 +94,20 @@ export default function HomePage() {
               ))}
             </Shelf>
 
+            {personal.data && personal.data.recommended.length > 0 && (
+              <Shelf title="Made for you">
+                {personal.data.recommended.slice(0, 6).map((album) => (
+                  <MediaCard
+                    key={album.id}
+                    href={`/album/${album.slug}`}
+                    title={album.title}
+                    subtitle={`${album.artist.name} · ${album.genre.name}`}
+                    gradient={album.gradient}
+                  />
+                ))}
+              </Shelf>
+            )}
+
             <Shelf title="New releases" href="/library?tab=albums">
               {data.newReleases.slice(0, 6).map((album) => (
                 <MediaCard
