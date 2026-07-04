@@ -1,5 +1,12 @@
 # API Reference
 
+> ⚠️ **v2 migration in progress.** The backend now speaks the YouTube-backed v2
+> API: Bearer-token auth (Supabase), `/api/yt/*` search & trending,
+> `/api/stream/:videoId` resolution and track-metadata based personal
+> endpoints (`/api/tracks/:videoId/like`, playlist `tracks` routes). This
+> document still describes several v1 routes and will be fully rewritten with
+> the frontend integration.
+
 Base URL: `/api` (proxied by the Next.js app; direct port `4000` in development).
 All request/response bodies are JSON unless noted. Authenticated endpoints read the
 `dm_at` (access) and `dm_rt` (refresh) httpOnly cookies. Errors share one shape:

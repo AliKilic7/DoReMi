@@ -14,22 +14,24 @@ All secrets live in environment variables. **Never commit `.env` files** — the
 
 | Variable | Required | Description |
 | --- | --- | --- |
-| `DATABASE_URL` | ✅ | PostgreSQL connection string |
-| `JWT_ACCESS_SECRET` | ✅ | Access-token signing secret, **min 32 chars in production** |
-| `JWT_REFRESH_SECRET` | ✅ | Refresh-token signing secret, **min 32 chars in production** |
+| `DATABASE_URL` | ✅ | Postgres connection string (Supabase: pooled/pgbouncer URL, port 6543) |
+| `DIRECT_URL` | ✅ | Direct Postgres URL for migrations (Supabase: port 5432; locally same as above) |
+| `SUPABASE_JWT_SECRET` | ✅ | Supabase project JWT secret — the API verifies access tokens with it, **min 32 chars in production** |
+| `YT_INSTANCES` | ✅ | Comma-separated Invidious-compatible instance URLs (failover order) |
 | `PORT` | – | API port (default `4000`) |
 | `NODE_ENV` | – | `development` \| `production` |
 | `CORS_ORIGIN` | – | The web app's origin (default `http://localhost:3000`) |
 | `API_URL` | – | (web build) where Next.js proxies `/api/*` (default `http://localhost:4000`) |
+| `MOCK_YT`, `DEV_AUTH` | – | Dev-only toggles (mock music source, local login). **Startup fails if enabled in production.** |
 
 Generate production secrets:
 
 ```bash
-openssl rand -base64 48
+openssl rand -base64 48   # (Supabase provides SUPABASE_JWT_SECRET — copy it, don't generate)
 ```
 
 The server **validates its environment at startup** (zod) and **refuses to boot in
-production** with placeholder or short JWT secrets. No secret is ever sent to the
+production** with placeholder/short secrets or dev toggles left on. No secret is ever sent to the
 client, logged, or embedded in the frontend bundle — the browser only ever sees
 httpOnly cookies.
 

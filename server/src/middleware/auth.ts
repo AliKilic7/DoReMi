@@ -1,30 +1,30 @@
 import type { NextFunction, Request, Response } from "express";
-import { ACCESS_COOKIE } from "../utils/cookies.js";
 import { ApiError } from "../utils/errors.js";
-import { verifyAccessToken } from "../utils/jwt.js";
+import { verifyAccessToken } from "../utils/supabase-jwt.js";
 
 declare global {
   namespace Express {
     interface Request {
       userId?: string;
+      userEmail?: string;
     }
   }
 }
 
 function extractToken(req: Request): string | undefined {
-  const cookieToken = req.cookies?.[ACCESS_COOKIE] as string | undefined;
-  if (cookieToken) return cookieToken;
   const header = req.headers.authorization;
   if (header?.startsWith("Bearer ")) return header.slice(7);
   return undefined;
 }
 
-/** Rejects the request with 401 unless a valid access token is present. */
+/** Rejects the request with 401 unless a valid Supabase access token is present. */
 export function requireAuth(req: Request, _res: Response, next: NextFunction): void {
   const token = extractToken(req);
   if (!token) throw ApiError.unauthorized();
   try {
-    req.userId = verifyAccessToken(token).sub;
+    const payload = verifyAccessToken(token);
+    req.userId = payload.sub;
+    req.userEmail = payload.email;
   } catch {
     throw ApiError.unauthorized("Session expired", "token_expired");
   }
@@ -36,9 +36,11 @@ export function optionalAuth(req: Request, _res: Response, next: NextFunction): 
   const token = extractToken(req);
   if (token) {
     try {
-      req.userId = verifyAccessToken(token).sub;
+      const payload = verifyAccessToken(token);
+      req.userId = payload.sub;
+      req.userEmail = payload.email;
     } catch {
-      // ignore invalid token — treated as anonymous
+      // anonymous
     }
   }
   next();

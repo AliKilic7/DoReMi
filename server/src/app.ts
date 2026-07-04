@@ -12,12 +12,14 @@ import {
   securityHeaders,
   verifyOrigin,
 } from "./middleware/security.js";
-import { authRouter } from "./modules/auth/auth.router.js";
-import { catalogRouter } from "./modules/catalog/catalog.router.js";
+import { mockInvidiousRouter } from "./dev/mock-invidious.js";
+import { devAuthRouter } from "./modules/devauth/devauth.router.js";
 import { likesRouter } from "./modules/likes/likes.router.js";
+import { meRouter } from "./modules/me/me.router.js";
 import { COVERS_DIR, playlistsRouter } from "./modules/playlists/playlists.router.js";
+import { AVATARS_DIR, profilesRouter } from "./modules/profiles/profiles.router.js";
 import { searchRouter } from "./modules/search/search.router.js";
-import { AVATARS_DIR, usersRouter } from "./modules/users/users.router.js";
+import { youtubeRouter } from "./modules/youtube/youtube.router.js";
 
 const AUDIO_DIR = path.join(
   path.dirname(fileURLToPath(import.meta.url)),
@@ -45,25 +47,26 @@ export function createApp(): express.Express {
     res.json({ status: "ok" });
   });
 
-  // Static media first — excluded from the general API rate limit since
-  // audio seeking legitimately fires many Range requests.
+  // Dev-only surfaces — env.ts refuses to boot production with these on.
+  if (env.MOCK_YT) {
+    // Local Invidious-compatible instance (fixtures + generated audio).
+    app.use("/mock/invidious", mockInvidiousRouter);
+    app.use("/api/audio", express.static(AUDIO_DIR, { immutable: true, maxAge: "30d", fallthrough: false }));
+  }
+  if (env.DEV_AUTH) {
+    app.use("/api", authLimiter, devAuthRouter);
+  }
+
+  // Uploaded playlist covers & avatars (excluded from the API rate limit).
   app.use("/api/covers", express.static(COVERS_DIR, { maxAge: "7d", fallthrough: false }));
   app.use("/api/avatars", express.static(AVATARS_DIR, { maxAge: "7d", fallthrough: false }));
-  app.use(
-    "/api/audio",
-    express.static(AUDIO_DIR, {
-      immutable: true,
-      maxAge: "30d",
-      fallthrough: false,
-    }),
-  );
 
-  app.use("/api/auth", authLimiter, authRouter);
   app.use("/api", apiLimiter);
-  app.use("/api", usersRouter);
+  app.use("/api", youtubeRouter);
+  app.use("/api", profilesRouter);
+  app.use("/api", meRouter);
   app.use("/api", likesRouter);
   app.use("/api", playlistsRouter);
-  app.use("/api", catalogRouter);
   app.use("/api/search", searchRouter);
 
   app.use(notFoundHandler);

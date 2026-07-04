@@ -232,3 +232,11 @@ export function renderSong(seed: number): RenderedSong {
     durationSec: Math.round(samples.length / SAMPLE_RATE),
   };
 }
+
+/** Duration a render for this seed would have — without rendering the audio. */
+export function songDuration(seed: number): number {
+  const rng = createRng(seed);
+  const { bpm, bars } = makeRecipe(rng);
+  const durationSec = bars * 4 * (60 / bpm) + 1.2;
+  return Math.round(Math.floor(durationSec * SAMPLE_RATE) / SAMPLE_RATE);
+}

@@ -2,23 +2,20 @@ import { Router } from "express";
 import type { Request, Response } from "express";
 import { z } from "zod";
 import { requireAuth } from "../../middleware/auth.js";
+import { ensureProfile } from "../profiles/profiles.service.js";
 import * as service from "./search.service.js";
 
-const querySchema = z.object({ q: z.string().trim().min(1).max(100) });
 const recordSchema = z.object({ query: z.string().trim().min(1).max(100) });
 
 export const searchRouter = Router();
 
-searchRouter.get("/", async (req: Request, res: Response) => {
-  const { q } = querySchema.parse(req.query);
-  res.json(await service.search(q));
-});
-
 searchRouter.get("/history", requireAuth, async (req: Request, res: Response) => {
+  await ensureProfile(req.userId!, req.userEmail);
   res.json({ items: await service.listHistory(req.userId!) });
 });
 
 searchRouter.post("/history", requireAuth, async (req: Request, res: Response) => {
+  await ensureProfile(req.userId!, req.userEmail);
   const { query } = recordSchema.parse(req.body);
   await service.recordHistory(req.userId!, query);
   res.status(201).json({ ok: true });

@@ -5,15 +5,13 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { Router } from "express";
 import type { Request, Response } from "express";
+import { z } from "zod";
 import { requireAuth } from "../../middleware/auth.js";
 import { ApiError } from "../../utils/errors.js";
 import { assertImageSignature, IMAGE_EXTENSIONS, imageUpload } from "../../utils/uploads.js";
-import {
-  addSongSchema,
-  createPlaylistSchema,
-  reorderSchema,
-  updatePlaylistSchema,
-} from "./playlists.schemas.js";
+import { ensureProfile } from "../profiles/profiles.service.js";
+import { trackMetaSchema } from "../tracks/tracks.service.js";
+import { createPlaylistSchema, updatePlaylistSchema } from "./playlists.schemas.js";
 import * as service from "./playlists.service.js";
 
 export const COVERS_DIR = path.join(
@@ -24,13 +22,19 @@ export const COVERS_DIR = path.join(
 );
 mkdirSync(COVERS_DIR, { recursive: true });
 
+const reorderSchema = z.object({
+  videoIds: z.array(z.string().regex(/^[A-Za-z0-9_-]{11}$/)).max(1000),
+});
+
 export const playlistsRouter = Router();
 
 playlistsRouter.get("/me/playlists", requireAuth, async (req: Request, res: Response) => {
+  await ensureProfile(req.userId!, req.userEmail);
   res.json({ items: await service.listPlaylists(req.userId!) });
 });
 
 playlistsRouter.post("/me/playlists", requireAuth, async (req: Request, res: Response) => {
+  await ensureProfile(req.userId!, req.userEmail);
   const input = createPlaylistSchema.parse(req.body ?? {});
   res.status(201).json({ playlist: await service.createPlaylist(req.userId!, input) });
 });
@@ -49,24 +53,24 @@ playlistsRouter.delete("/playlists/:id", requireAuth, async (req: Request, res: 
   res.json({ ok: true });
 });
 
-playlistsRouter.post("/playlists/:id/songs", requireAuth, async (req: Request, res: Response) => {
-  const { songId } = addSongSchema.parse(req.body);
-  const added = await service.addSong(req.userId!, String(req.params.id), songId);
+playlistsRouter.post("/playlists/:id/tracks", requireAuth, async (req: Request, res: Response) => {
+  const meta = trackMetaSchema.parse(req.body);
+  const added = await service.addTrack(req.userId!, String(req.params.id), meta);
   res.status(added ? 201 : 200).json({ added });
 });
 
 playlistsRouter.delete(
-  "/playlists/:id/songs/:songId",
+  "/playlists/:id/tracks/:videoId",
   requireAuth,
   async (req: Request, res: Response) => {
-    await service.removeSong(req.userId!, String(req.params.id), String(req.params.songId));
+    await service.removeTrack(req.userId!, String(req.params.id), String(req.params.videoId));
     res.json({ ok: true });
   },
 );
 
-playlistsRouter.put("/playlists/:id/songs", requireAuth, async (req: Request, res: Response) => {
-  const { songIds } = reorderSchema.parse(req.body);
-  await service.reorderSongs(req.userId!, String(req.params.id), songIds);
+playlistsRouter.put("/playlists/:id/tracks", requireAuth, async (req: Request, res: Response) => {
+  const { videoIds } = reorderSchema.parse(req.body);
+  await service.reorderTracks(req.userId!, String(req.params.id), videoIds);
   res.json({ ok: true });
 });
 

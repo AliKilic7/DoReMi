@@ -11,13 +11,7 @@ export const updateProfileSchema = z.object({
   bio: z.string().trim().max(200).nullable().optional(),
 });
 
-export const changePasswordSchema = z.object({
-  currentPassword: z.string().min(1, "Current password is required"),
-  newPassword: z
-    .string()
-    .min(8, "New password must be at least 8 characters")
-    .max(128),
-});
+// Password management lives in Supabase Auth now — no schema needed here.
 
 export const settingsSchema = z
   .object({

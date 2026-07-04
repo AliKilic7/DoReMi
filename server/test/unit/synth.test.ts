@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createRng, renderSong } from "../../prisma/synth.js";
+import { createRng, renderSong } from "../../src/dev/synth.js";
 
 describe("synth", () => {
   it("rng is deterministic for a given seed", () => {

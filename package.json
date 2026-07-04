@@ -21,5 +21,8 @@
   "devDependencies": {
     "concurrently": "^9.2.3",
     "playwright-core": "^1.61.1"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.19.3"
   }
 }

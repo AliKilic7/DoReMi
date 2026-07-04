@@ -1,134 +1,98 @@
+// ============================================================================
+// DoReMi v2 — YouTube-backed streaming schema (PROPOSAL, not yet active)
+//
+// Design principles
+//   • The catalog lives on YouTube. We NEVER store audio files — only the
+//     metadata needed to render lists and re-resolve streams: title, artist,
+//     thumbnail URL and the YouTube videoId.
+//   • Supabase hosts Postgres + Auth. Profile.id mirrors auth.users.id (UUID
+//     from the verified Supabase JWT). No cross-schema FK — Supabase's auth
+//     schema is managed separately; the API creates a Profile row on first
+//     authenticated request.
+//   • Tracks are cached lazily: the first time any user likes / queues /
+//     plays / playlists a search result, we upsert it by videoId. Personal
+//     tables reference Track, so renames on YouTube's side update everywhere
+//     via the cache row.
+//   • Works identically on plain Postgres for local dev — nothing here is
+//     Supabase-specific except the pooled/direct URL pair.
+// ============================================================================
+
 generator client {
   provider = "prisma-client-js"
   output   = "../generated/prisma"
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  // Supabase: pooled connection (pgbouncer, port 6543) for the app…
+  url       = env("DATABASE_URL")
+  // …and the direct connection (port 5432) for migrations.
+  directUrl = env("DIRECT_URL")
+  provider  = "postgresql"
 }
 
-model User {
-  id           String   @id @default(cuid())
-  email        String   @unique
-  username     String   @unique
-  displayName  String
-  passwordHash String
-  avatarUrl    String?
-  bio          String?
-  /// Incremented to invalidate all outstanding refresh tokens (logout everywhere).
-  tokenVersion Int      @default(0)
+/// App-level user data. `id` equals Supabase `auth.users.id` (JWT `sub`).
+/// Email, password hashing, OAuth, magic links etc. all live in Supabase Auth.
+model Profile {
+  id          String   @id @db.Uuid
+  username    String   @unique
+  displayName String
+  avatarUrl   String?
+  bio         String?
   /// User preferences (language, audio quality, notifications, privacy).
-  settings     Json     @default("{}")
+  settings    Json     @default("{}")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  playlists      Playlist[]
+  likes          Like[]
+  playHistory    PlayHistory[]
+  searchHistory  SearchHistory[]
+  followedArtists FollowedArtist[]
+
+  @@map("profiles")
+}
+
+/// Metadata cache for a YouTube track. No audio, no stream URLs — stream URLs
+/// expire within hours, so they are resolved on demand at play time and never
+/// persisted.
+model Track {
+  id           String   @id @default(cuid())
+  /// YouTube video id — the stable global key (11 chars).
+  videoId      String   @unique
+  title        String
+  /// Best-effort artist: YouTube Music artist name, else the channel name.
+  artist       String
+  /// YouTube channel id — links a track to its artist page.
+  channelId    String?
+  thumbnailUrl String
+  durationSec  Int
+  /// When metadata was last refreshed from the source API.
+  cachedAt     DateTime @updatedAt
   createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
 
-  playlists     Playlist[]
-  likes         Like[]
-  follows       FollowArtist[]
-  playHistory   PlayHistory[]
-  searchHistory SearchHistory[]
+  likes          Like[]
+  playlistTracks PlaylistTrack[]
+  playHistory    PlayHistory[]
 
-  @@map("users")
-}
-
-model Genre {
-  id       String @id @default(cuid())
-  name     String @unique
-  slug     String @unique
-  /// CSS gradient rendered as the genre tile artwork.
-  gradient String
-
-  albums Album[]
-  songs  Song[]
-
-  @@map("genres")
-}
-
-model Artist {
-  id               String @id @default(cuid())
-  name             String
-  slug             String @unique
-  bio              String
-  monthlyListeners Int
-  /// CSS gradient rendered as the artist portrait.
-  gradient         String
-
-  albums    Album[]
-  songs     Song[]
-  followers FollowArtist[]
-
-  createdAt DateTime @default(now())
-
-  @@index([monthlyListeners(sort: Desc)])
-  @@map("artists")
-}
-
-model Album {
-  id          String   @id @default(cuid())
-  title       String
-  slug        String   @unique
-  releaseDate DateTime
-  /// CSS gradient rendered as the album cover.
-  gradient    String
-
-  artistId String
-  artist   Artist @relation(fields: [artistId], references: [id], onDelete: Cascade)
-  genreId  String
-  genre    Genre  @relation(fields: [genreId], references: [id])
-
-  songs Song[]
-
-  createdAt DateTime @default(now())
-
-  @@index([artistId])
-  @@index([releaseDate(sort: Desc)])
-  @@map("albums")
-}
-
-model Song {
-  id          String @id @default(cuid())
-  title       String
-  trackNumber Int
-  durationSec Int
-  /// Streaming path served by the API (e.g. /api/audio/<file>.wav).
-  audioUrl    String
-  playCount   Int    @default(0)
-
-  albumId  String
-  album    Album  @relation(fields: [albumId], references: [id], onDelete: Cascade)
-  artistId String
-  artist   Artist @relation(fields: [artistId], references: [id], onDelete: Cascade)
-  genreId  String
-  genre    Genre  @relation(fields: [genreId], references: [id])
-
-  likes         Like[]
-  playlistSongs PlaylistSong[]
-  playHistory   PlayHistory[]
-
-  createdAt DateTime @default(now())
-
-  @@index([albumId])
-  @@index([artistId])
-  @@index([playCount(sort: Desc)])
   @@index([title])
-  @@map("songs")
+  @@index([artist])
+  @@map("tracks")
 }
 
 model Playlist {
   id          String  @id @default(cuid())
   name        String
   description String?
-  /// CSS gradient cover, replaced by coverUrl when the user uploads one.
+  /// CSS gradient used until the user uploads a cover.
   gradient    String
   coverUrl    String?
   favorite    Boolean @default(false)
   pinned      Boolean @default(false)
 
-  ownerId String
-  owner   User   @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  ownerId String  @db.Uuid
+  owner   Profile @relation(fields: [ownerId], references: [id], onDelete: Cascade)
 
-  songs PlaylistSong[]
+  tracks PlaylistTrack[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -137,50 +101,55 @@ model Playlist {
   @@map("playlists")
 }
 
-model PlaylistSong {
+model PlaylistTrack {
   id       String   @id @default(cuid())
   position Int
   addedAt  DateTime @default(now())
 
   playlistId String
   playlist   Playlist @relation(fields: [playlistId], references: [id], onDelete: Cascade)
-  songId     String
-  song       Song     @relation(fields: [songId], references: [id], onDelete: Cascade)
+  trackId    String
+  track      Track    @relation(fields: [trackId], references: [id], onDelete: Cascade)
 
-  @@unique([playlistId, songId])
+  @@unique([playlistId, trackId])
   @@index([playlistId, position])
-  @@map("playlist_songs")
+  @@map("playlist_tracks")
 }
 
 model Like {
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  songId    String
-  song      Song     @relation(fields: [songId], references: [id], onDelete: Cascade)
+  userId    String   @db.Uuid
+  user      Profile  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  trackId   String
+  track     Track    @relation(fields: [trackId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
 
-  @@id([userId, songId])
+  @@id([userId, trackId])
   @@index([userId, createdAt(sort: Desc)])
   @@map("likes")
 }
 
-model FollowArtist {
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  artistId  String
-  artist    Artist   @relation(fields: [artistId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
+/// "Followed artist" is a YouTube channel — denormalized name/thumbnail so the
+/// sidebar and home shelves render without extra API calls.
+model FollowedArtist {
+  userId       String  @db.Uuid
+  user         Profile @relation(fields: [userId], references: [id], onDelete: Cascade)
+  channelId    String
+  name         String
+  thumbnailUrl String?
+  createdAt    DateTime @default(now())
 
-  @@id([userId, artistId])
-  @@map("follow_artists")
+  @@id([userId, channelId])
+  @@map("followed_artists")
 }
 
+/// Powers "recently played" / "continue listening" and play-count style
+/// recommendations. Rows are pruned beyond the newest N per user by the API.
 model PlayHistory {
   id       String   @id @default(cuid())
-  userId   String
-  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  songId   String
-  song     Song     @relation(fields: [songId], references: [id], onDelete: Cascade)
+  userId   String   @db.Uuid
+  user     Profile  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  trackId  String
+  track    Track    @relation(fields: [trackId], references: [id], onDelete: Cascade)
   playedAt DateTime @default(now())
 
   @@index([userId, playedAt(sort: Desc)])
@@ -189,8 +158,8 @@ model PlayHistory {
 
 model SearchHistory {
   id        String   @id @default(cuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String   @db.Uuid
+  user      Profile  @relation(fields: [userId], references: [id], onDelete: Cascade)
   query     String
   createdAt DateTime @default(now())
 
